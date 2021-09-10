@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="auth-wrapper">
+    <div class="auth-content">
+        <div class="auth-bg">
+            <span class="r"></span>
+            <span class="r s"></span>
+            <span class="r s"></span>
+            <span class="r"></span>
+        </div>
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="feather icon-unlock auth-icon"></i>
+                </div>
+                <h2 class="mb-4">Logged Out!</h3>
+                <div>
+                    <h4>Go to Login page</h4>
+                </div>
+                <p class="mb-2 text-muted">Forgot password? <a href="auth-reset-password.html">Reset</a></p>
+                <p class="mb-0 text-muted">Don’t have an account? <a href="auth-signup.html">Signup</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

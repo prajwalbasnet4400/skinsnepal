@@ -1,32 +1,22 @@
 from rest_framework import serializers
-from .models import Item,Listing,Addon
+from .models import Item,Listing
 
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ['name','iconurl']
+        fields = ['pk','name','iconurl']
 
 
 class ListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
-        fields = ['item','float','owner','price','date_created','addons']
-        read_only_fields = ['date_created','addons','owner']
+        fields = ['pk','item','float','owner','price','date_created','addons']
+        read_only_fields = ['date_created','owner']
 
-
-
-
-class AddonSerializer(serializers.ModelSerializer):
-    addon = ItemSerializer(many=False,read_only=True)
-    class Meta:
-        model = Addon
-        fields = ['addon']
-
-class ListingList(serializers.ModelSerializer): #LIST 
+class ListingNestedSerializer(serializers.ModelSerializer):
     item = ItemSerializer(many=False,read_only=True)
-    addons = AddonSerializer(many=True,read_only=True)
+    addons = ItemSerializer(many=True,read_only=True)
     class Meta:
         model = Listing
-        fields = ['item','float','owner','price','date_created','addons']
-        read_only_fields = ['owner']
+        fields = '__all__'

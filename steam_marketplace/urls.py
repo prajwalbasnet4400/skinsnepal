@@ -2,8 +2,13 @@ from django.contrib import admin
 from django.urls import path,include
 
 
+
 urlpatterns = [
-    path('api/csgo/',include('csgo.urls')),
-    path('api-auth/', include('rest_framework.urls')),
+    path('',include('csgo.urls')),
+    path('account/',include('user.urls')),
+
+    # path('auth/', include('djoser.urls')),
+    # path('auth/', include('djoser.urls.authtoken')),
+
     path('admin/', admin.site.urls),
 ]
