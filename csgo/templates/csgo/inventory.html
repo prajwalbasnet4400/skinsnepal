@@ -2,32 +2,14 @@
 
 
 {% block content %}
-
-
-<form method="POST" action="">
-    {{ formset.management_form }}
-    <table>
-        {% for f in form %}
-        
-        {{f}}
-
-        {% endfor %}
-    </table>
-</form>
 <div class="container">
     <div class="row">
         <div class="col">
-            <form action="" method="post" >
-                {% csrf_token %}
-                <div class="text-right">
-
-                    <button type="submit" class="btn btn-success">Proceed to pricing</button>
-                </div>
-
-                <div class="row" id="inventory">
-                        
-                </div>
-            </form>
+            <div>
+                {% for item in inventory %}
+                    {{item}}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>

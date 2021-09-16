@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item,Listing
+from csgo.models import Item,Listing
 
 
 class ItemSerializer(serializers.ModelSerializer):

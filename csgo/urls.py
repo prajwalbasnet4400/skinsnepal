@@ -1,10 +1,11 @@
 from django.urls import path,include
 from . import views
-
+from .rest import views as rest_views
 from rest_framework import routers
+
 router = routers.DefaultRouter()
-router.register(r'item',views.ItemViewSet)
-router.register(r'listing',views.ListingViewSet)
+router.register(r'item',rest_views.ItemViewSet)
+router.register(r'listing',rest_views.ListingViewSet)
 
 app_name = 'csgo'
 
@@ -22,8 +23,11 @@ listing_patterns = [
 ]
 
 
+
 urlpatterns = [
     path('',include(base_patterns)),
     path('listing/', include(listing_patterns),name='listing'),
+    # path('get_inventory/', views.InventoryJsonView.as_view(),name='inventory'),
+    
     # path('api/', include(router.urls)), #API disabled for now
 ]

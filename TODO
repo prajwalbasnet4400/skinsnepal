@@ -7,3 +7,32 @@ CSGO MARKET API
 
 // Incomplete
 - CSGO
+
+Inventory Apis:
+    https://steamcommunity.com/inventory/76561198323043075/730/2?l=english > Better
+    https://steamcommunity.com/profiles/76561198323043075/inventory/json/730/2
+
+Market Price Apis:
+    https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=<MARKET_HASH_NAME>
+
+External Apis:
+    -Float: $ Host yourself, api limited
+        https://api.csgofloat.com/?s=76561198323043075&a=23298953657&d=14015950396690719237 > s,a,d from steam inspect link
+
+
+STEAM ITEM PIPELINE:
+    -https://steamcommunity.com/inventory/76561198323043075/730/2?l=english: Get inventory
+        - Data is in rgInventory
+        - DataDiscription is is rgDiscriptions
+            -Get steamid64
+            -Get Item with your market_hash_name in DataDiscription
+            -Get asset id of skin, marked id in rgInventory
+            -Construct weapon inspect link
+            -Get float value at csgofloat.com api
+            -Create listing with all the gathered data
+
+
+
+- BUGS:
+    steam_inventory
+    - Item inpect_link returing none

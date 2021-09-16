@@ -1,13 +1,11 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 
 <div class="row">
     <div class="col-12">
         <div class="row p-3">
             <div class="col-12 col-md-6 p-2">
-                <div class="card" style="height: 100%;">
-                    <div class="card-block d-flex">
+                <div class="card bg-light" style="height: 100%;">
+                    <div class="card-block d-flex" style="height: 100%;">
                         <img src="{{listing.item.get_icon}}" class="img-fluid sticker-fix" alt="Image">
                     </div>
                 </div>
@@ -42,8 +40,7 @@
                                 <td>Stattrak™</td>
                                 <td>{{listing.item.stattrak}}</td>
                             </tr>
-                            {% endif %}
-                            {% if listing.item.souvenir %}
+                            {% endif %} {% if listing.item.souvenir %}
                             <tr>
                                 <td>Souvenir</td>
                                 <td>{{listing.item.souvenir}},{{listing.item.tournament}}</td>
@@ -54,7 +51,7 @@
                 </div>
             </div>
             <div class="col-12 p-2">
-                <div class="row bg-white">
+                <div class="row bg-white m-0">
                     <div class="col-12 col-md-6">
                         <div class="">
                             <table class="table table-align">
@@ -78,12 +75,23 @@
 
                                     <tr style="overflow: hidden;">
                                         <td>Stickers attached</td>
-                                        <td class="text-break" style="overflow: hidden;white-space: normal;">{{listing.addons.all}}</td>
+                                        <td class="text-break" style="overflow: hidden;white-space: normal;">
+                                            {% for addon in listing.addons.all %}
+                                            <span class="badge badge-pill text-white p-1 copy-text" style="background: #{{addon.rarity_color}};cursor: pointer;" 
+                                            data-clipboard-text="{{addon.market_hash_name}}" data-toggle="tooltip" data-html="true" 
+                                            title="<img src='{{addon.get_icon_small}}' width='100px' class='img-fluid' >">
+                                                {{addon.name}}
+                                            </span> 
+                                            {% empty %}
+                                                <span>None</span>
+                                            {% endfor %}
+
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        
+
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="d-flex" style="height: 100%;">
