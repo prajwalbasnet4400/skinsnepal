@@ -51,5 +51,13 @@ class ListingUpdateView(UpdateView):
 
 class InventoryView(ListView):
     template_name = 'csgo/inventory.html'
-    context_object_name = 'items'
+    context_object_name = 'inventory'
     model = InventoryItem
+
+    def get_queryset(self):
+        return InventoryItem.objects.filter(owner=self.request.user).select_related('item').prefetch_related('addons')
+
+def test(request,*args, **kwargs):
+    ctx = {}
+
+    return render(request,'test.html',ctx)

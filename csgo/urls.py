@@ -27,7 +27,7 @@ listing_patterns = [
 urlpatterns = [
     path('',include(base_patterns)),
     path('listing/', include(listing_patterns),name='listing'),
-    # path('get_inventory/', views.InventoryJsonView.as_view(),name='inventory'),
+    path('inventory/', views.InventoryView.as_view(),name='inventory'),
     
     # path('api/', include(router.urls)), #API disabled for now
 ]

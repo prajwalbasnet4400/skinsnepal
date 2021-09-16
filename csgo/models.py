@@ -66,10 +66,17 @@ class Item(models.Model):
     
 
 class Listing(models.Model):
-    item = models.ForeignKey(Item, models.CASCADE)
-    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)])
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, models.CASCADE)
+
+    classid = models.CharField(max_length=128,null=True,blank=True)
+    instanceid = models.CharField(max_length=128,null=True,blank=True)
+    assetid = models.CharField(max_length=128,null=True,blank=True)
+    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)])
     price = models.PositiveBigIntegerField()
+    tradable = models.BooleanField(default=True)
+    inspect_url = models.URLField(null=True)
+
     date_created = models.DateTimeField(auto_now_add=True)
     addons = models.ManyToManyField(Item,related_name='addons',blank=True,through='ListingAddon')
     
@@ -89,34 +96,43 @@ class ListingAddon(models.Model):
 
 class InventoryItem(models.Model):
     owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE,related_name='inventory') 
-    item = models.ForeignKey(Item,on_delete=models.CASCADE,related_name='inventory')
+    item = models.ForeignKey(Item,on_delete=models.CASCADE,related_name='_inventory')
 
     classid = models.CharField(max_length=128)
     instanceid = models.CharField(max_length=128)
     assetid = models.CharField(max_length=128)
 
-    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)])
+    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
     addons = models.ManyToManyField(Item,blank=True)
     tradable = models.BooleanField(default=True)
     inspect_url = models.URLField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
 
     def __str__(self):
         return self.item.market_hash_name
     
     @staticmethod
     def update_inventory(user):
+        InventoryItem.objects.filter(owner=user).delete()
         inv = Inventory(user.steamid())
-        inv.get_data()
-        obs = [
+        data = inv.get_data()
+        objs = [
             InventoryItem(
                 owner=user,
                 item=Item.objects.get(market_hash_name=item['market_hash_name']),
                 classid=item['classid'],
                 instanceid=item['instanceid'],
                 assetid=item['assetid'],
-                float=item['float'],
-                addons=item['addons'],
                 tradable=item['tradable'],
                 inspect_url=item['inspect_url'],
-            ) for item in inv.data.values()
+            ) for item in data.values() if Item.objects.filter(market_hash_name=item['market_hash_name']).exists()
         ]
+        InventoryItem.objects.bulk_create(objs)
+
+        for obj in objs:
+            stickers = [Item.objects.filter(market_hash_name__icontains=sticker).first() for sticker in data[obj.assetid].get('stickers',[]) if Item.objects.filter(market_hash_name__icontains=sticker).exists()]
+            if len(stickers) == 0:
+                continue 
+            obj.addons.add(*stickers)

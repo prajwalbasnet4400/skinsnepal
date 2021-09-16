@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 import requests
 from django.utils.html import strip_tags
 
@@ -45,6 +44,7 @@ class Inventory:
             return None
         sticker = strip_tags(sticker[-1]['value'])                         # Remove html tags from the sticker data and get csv names
         sticker = sticker.split(',')
+        sticker[0] = sticker[0].split(':')[-1]
         if " " in sticker:
             sticker.remove(" ")
         item['stickers'] = sticker
@@ -55,55 +55,20 @@ class Inventory:
         descriptions = {f"{mydict['classid']}":mydict for mydict in self.inventory["descriptions"]}
 
         for key,val in assets.copy().items():
-            cid = val['classid']
-            assets[key] = descriptions[cid]                                 # Remove asset dict values and insert its corresponding description
-            assets[key]['assetid'] = key                                    # Add the assetid as key to description data
-            item = assets[key]            
+            assets[key].update(descriptions[val['classid']])
 
-            self.format_inspect_url_inplace(item)
-            self.format_icon_inplace(item)
-            self.format_sticker_inplace(item)
-
+            self.format_inspect_url_inplace(assets[key])
+            self.format_icon_inplace(assets[key])
+            self.format_sticker_inplace(assets[key])
+        
+        for key,val in assets.copy().items():
             if not self.is_marketable(assets[key]):
                 assets.pop(key)
                 continue
+        
         self.data = assets
         return assets
-    
-    # def save_model(self,user):
-    #     i=0
-    #     ThroughModel = InventoryItem.addons.through
-    #     inv_obs = []
-    #     addon_obs = []
-    #     for val in self.data.values():
-    #         item = Item.objects.filter(market_hash_name=val.get('market_hash_name'))
-    #         if not item.exists():
-    #             continue
-    #         inv_item = InventoryItem(owner=user,item = item.first(),classid=val['classid'],
-    #                             instanceid=val['instanceid'],assetid=val['assetid'],tradable=val['tradable'],inspect_url=val['inspect_url'])
-    #         inv_obs.append(inv_item)
-    #     InventoryItem.objects.bulk_create(inv_obs,ignore_conflicts=True)
-    #     for obj in inv_obs:
-    #         if not obj.pk:
-    #             i = i+1
-    #             print(i)
-
-    #             continue
-    #         data = self.data 
-    #         assetid = data[obj.assetid]
-    #         stickers = assetid.get('stickers')
-    #         for sticker in stickers:
-    #             try:
-    #                 query = Item.objects.get(name__icontains=sticker)
-    #             except Item.DoesNotExist:
-    #                 continue
-    #             addon_obs.append(query)
-    #         obj.addons.add(addon_obs)
 
 if __name__ == "__main__":
-    from timeit import default_timer as timer
-    user = get_user_model().objects.first()
-    tok = Inventory(user.steamid())
-    tok.get_data()
-    tok.save_model(user)
-    print(len(tok.data))
+    tok = Inventory(76561198323043075)
+    print(len(tok.get_data()))
