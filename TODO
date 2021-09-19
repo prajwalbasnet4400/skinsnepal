@@ -36,3 +36,9 @@ STEAM ITEM PIPELINE:
 - BUGS:
     steam_inventory
     - Item inpect_link returing none
+
+- Test:
+    - CSRF attacks on every form
+    - XSS attacks
+    - Form edits & cleaning
+    - Total queries on db

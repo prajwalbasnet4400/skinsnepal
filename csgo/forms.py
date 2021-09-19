@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import fields
 from django_select2 import forms as s2forms
 
 from . import models
@@ -29,18 +28,27 @@ class ListingCreateForm(forms.ModelForm):
         }
     attrs = {"style": "width: 100%"}
 
+class InventoryCreateForm(forms.ModelForm):
+    item_image = forms.Field(widget=forms.HiddenInput(),disabled=True)
+    item_name = forms.Field(widget=forms.HiddenInput(),disabled=True)
 
-class ListingInventoryCreateForm(forms.ModelForm):
-    item = forms.ChoiceField(disabled=True)
+    immutable_fields = ('item','classid','instanceid','assetid','tradable','inspect_url','inventory','float','addons')
+
     class Meta:
         model = models.Listing
-        fields = '__all__'
+        fields = ('item','classid','instanceid','assetid','tradable','inspect_url','price','float','inventory','addons')
+        widgets = {
+                    'item': forms.HiddenInput(),
+                    'tradable':forms.HiddenInput(),
+                    'assetid':forms.HiddenInput(),
+                    'classid':forms.HiddenInput(),
+                    'instanceid':forms.HiddenInput(),
+                    'inventory':forms.HiddenInput(),
+                    'addons':forms.MultipleHiddenInput(),
+      
+                    }
 
-class InventoryForm(forms.Form):
-    assetid = forms.CharField()
-    classid = forms.CharField()
-    instanceid = forms.CharField()
-    market_hash_name = forms.CharField()
-    stickers = forms.CharField()
-    icon_url = forms.CharField()
-
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.immutable_fields:
+            self.fields[field].widget.attrs['readonly']='readonly'

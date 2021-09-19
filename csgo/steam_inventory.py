@@ -4,6 +4,7 @@ from django.utils.html import strip_tags
 class Inventory:
     steam_inventory_api = "https://steamcommunity.com/inventory/{steamid}/730/2?l=english"
     steam_icon_url = "https://community.akamai.steamstatic.com/economy/image/{icon_url}"
+    float_api = "https://api.csgofloat.com/?url={inspect_url}"
     clean_fields = ['currency','background_color','type','market_name','name','name_color','tags','appid','market_actions','descriptions','market_tradable_restriction']
 
     def __init__(self,steamid):
@@ -22,6 +23,14 @@ class Inventory:
         for key in keys:
             item.pop(key,None)
     
+    @staticmethod
+    def get_float_inplace(inspect_url,float_api="https://api.csgofloat.com/?url={inspect_url}"):
+        url = float_api.format(inspect_url=inspect_url)
+        float = requests.get(url).json()
+
+        float = float.get('iteminfo')
+        return float.get('floatvalue',0)
+
     def format_inspect_url_inplace(self,item):
         steamid = str(self.steamid)
         assetid = str(item['assetid'])

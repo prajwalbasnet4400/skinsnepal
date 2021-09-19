@@ -5,15 +5,26 @@
 <div class="container">
     <div class="row">
         <div class="col">
+            <div class="text-right">
+                <button type="button" id="proceed" class="btn btn-success">Proceed to Pricing</button>
+            </div>
             <div>
                 <ol>
-
-                    {% for item in inventory %}
+                    {% csrf_token %}
+                    {% for item in data %}
                     <li>
                         {{item.item.market_hash_name}} <img src="{{item.item.get_icon}}" height="64px" width="64px" alt="">
-                        <input type="checkbox" class="form-control" name="{{item.assetid}}" value="{{item.assetid}}" id="">
-                    </li>    
+                        | {% for addon in item.addons.all %}
+                        {{addon}},
+                        {% endfor %}
+                        {% if item.is_listed %}
+                        <input type="checkbox" disabled><small>(already listed)</small>                        
+                        {% else %}
+                        <input type="checkbox" data-assetid="{{item.assetid}}">                        
+                        {% endif %}
+                    </li>
                     {% endfor %}
+    
                 </ol>
                 </div>
         </div>
@@ -21,3 +32,21 @@
 </div>
 
 {% endblock content %}
+
+{% block js %}
+<script>
+    $('#proceed').click(function(){
+        var items = [];
+        $(':checked[data-assetid]').each(function(index,value){
+            var assetid = value.dataset.assetid;
+            items.push(assetid);
+        });
+        var data = {
+            'csrfmiddlewaretoken':$('input[name="csrfmiddlewaretoken"]').val(),
+            'item':items
+        };
+        $.post( "{{inventory_url}}", data,function(data){
+            window.location = data;
+        });});
+</script>
+{% endblock js %}
