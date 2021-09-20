@@ -65,6 +65,3 @@ def get_csgo_items():
                  'rarity':rarity, 'rarity_color':rarity_color,'souvenir':souvenir,'tournament':tournament,'stattrak':stattrak}
         item_list.append(item)
     return item_list
-
-if __name__ == '__main__':
-    print(len(get_csgo_items()))

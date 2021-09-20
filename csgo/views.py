@@ -58,7 +58,6 @@ class InventoryView(View):
 
     def get(self,request):
         request.session.pop('to_list',None)
-        # InventoryItem.update_inventory(request.user)
         query = InventoryItem.objects.filter(owner=self.request.user).select_related('item').prefetch_related('addons').order_by('is_listed')
         ctx = {'data':query,
                 'inventory_url':reverse('csgo:inventory')}
@@ -114,3 +113,7 @@ def test(request,*args, **kwargs):
         'form':form
     }
     return render(request,'test.html',ctx)
+
+def test2(request,*args, **kwargs):
+    InventoryItem.update_inventory(request.user)
+    return render(request,'test.html')
