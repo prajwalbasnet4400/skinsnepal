@@ -26,17 +26,16 @@ class ListingCreateForm(forms.ModelForm):
             "item":ItemWidget,
             "addons":AddonWidget,
         }
-    attrs = {"style": "width: 100%"}
 
 class InventoryCreateForm(forms.ModelForm):
     item_image = forms.Field(widget=forms.HiddenInput(),disabled=True)
     item_name = forms.Field(widget=forms.HiddenInput(),disabled=True)
 
-    immutable_fields = ('item','classid','instanceid','assetid','tradable','inspect_url','inventory','float','addons')
+    immutable_fields = ('item','tradable','inventory','float','addons')
 
     class Meta:
         model = models.Listing
-        fields = ('item','classid','instanceid','assetid','tradable','inspect_url','price','float','inventory','addons')
+        fields = ('item','tradable','price','float','inventory','addons')
         widgets = {
                     'item': forms.HiddenInput(),
                     'tradable':forms.HiddenInput(),

@@ -4,10 +4,11 @@ from django.conf import settings
 from django.core.validators import MinValueValidator,MaxValueValidator
 from django.db.models.constraints import UniqueConstraint
 from django.urls import reverse   
+from django.db.models import Q
+import datetime
 
 from .parsers import get_csgo_items
 from csgo.steam_inventory import Inventory
-
 avatar_url = settings.STEAM_AVATAR_URL
 
 class Item(models.Model):
@@ -46,8 +47,8 @@ class Item(models.Model):
             stattrak=item.get('stattrak'),
             souvenir=item.get('souvenir'),
             tournament=item.get('tournament'),
-        ) for item in items if not Item.objects.filter(market_hash_name=item.get('market_hash_name')).exists()]
-        Item.objects.bulk_create(obs,ignore_conflicts=False)
+        ) for item in items]
+        Item.objects.bulk_create(obs,ignore_conflicts=True)
 
     def get_icon(self):
         url = avatar_url
@@ -71,18 +72,15 @@ class Listing(models.Model):
     item = models.ForeignKey(Item, models.CASCADE,null=False)
     inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True)
 
-    classid = models.CharField(max_length=128,unique=True,null=True,blank=True)
-    instanceid = models.CharField(max_length=128,unique=True,null=True,blank=True)
-    assetid = models.CharField(max_length=128,unique=True,null=True,blank=True)
     float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)])
     price = models.PositiveBigIntegerField(validators=[MinValueValidator(1)],null=False,blank=False)
     tradable = models.BooleanField(default=True)
-    inspect_url = models.CharField(max_length=512,blank=True,null=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
     addons = models.ManyToManyField(Item,related_name='addons',blank=True,through='ListingAddon')
     
     class Meta:
+        ordering = ('-date_created',)
         constraints = [
             UniqueConstraint(fields=['owner','assetid'],name='unique_inventory_listing')
         ]
@@ -102,12 +100,20 @@ class Listing(models.Model):
 class ListingAddon(models.Model):
     listing = models.ForeignKey(Listing,models.CASCADE)
     addon = models.ForeignKey(Item,models.CASCADE)
-    quantity = models.PositiveSmallIntegerField(default=1,validators=[MaxValueValidator(5)])
 
     def __str__(self):
         return self.addon.name
 
+
+class InventoryAddon(models.Model):
+    inventory = models.ForeignKey('InventoryItem',models.CASCADE)
+    addon = models.ForeignKey(Item,models.CASCADE)
+
+    def __str__(self):
+        return f"{self.addon.name}"
+
 class InventoryItem(models.Model):
+
     owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE,related_name='inventory') 
     item = models.ForeignKey(Item,on_delete=models.CASCADE,related_name='_inventory')
 
@@ -116,35 +122,58 @@ class InventoryItem(models.Model):
     assetid = models.CharField(max_length=128)
 
     float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
-    addons = models.ManyToManyField(Item,blank=True)
+    addons = models.ManyToManyField(Item,blank=True,through='InventoryAddon')
     tradable = models.BooleanField(default=True)
     inspect_url = models.TextField()
 
     is_listed = models.BooleanField(default=False)
-
+    last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ('is_listed',)
         constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
 
     def __str__(self):
         return self.item.market_hash_name
     
     @staticmethod
+    def rate_limited(owner):
+        latest_obj = InventoryItem.objects.filter(owner=owner).latest('last_updated')
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        last_updated = current_time - latest_obj.last_updated
+        print(last_updated)
+        if last_updated.total_seconds() <= 60:
+            return True
+        else:
+            return False
+
+    @staticmethod
     def update_inventory(user):
         inv = Inventory(user.steamid())
         data = inv.get_data()
         objs = []
         assetids = []
+        names = set()
+        sticker_names = set()
+
         for item in data.values():
             assetids.append(item['assetid'])
-            if not Item.objects.filter(market_hash_name=item['market_hash_name']).exists():
+            names.add(item['market_hash_name'])
+            for sticker in item.get('stickers',[]):
+                sticker_names.add(sticker)
+
+        existing_items = {item.market_hash_name:item for item in Item.objects.filter(market_hash_name__in=names)}   # TODO:Convert it to in_bulk() method
+        existing_inv = InventoryItem.objects.filter(assetid__in=assetids).values_list('assetid',flat=True)
+
+        for item in data.values():
+            if not item.get('market_hash_name') in existing_items.keys():
                 continue
-            if InventoryItem.objects.filter(owner=user,assetid=item['assetid']).exists():
+            if item.get('assetid') in existing_inv:
                 continue
             float = Inventory.get_float_inplace(item['inspect_url'])
             inv =InventoryItem(
                 owner=user,
-                item=Item.objects.get(market_hash_name=item['market_hash_name']),
+                item=existing_items.get(item['market_hash_name']),
                 classid=item['classid'],
                 instanceid=item['instanceid'],
                 assetid=item['assetid'],
@@ -154,10 +183,13 @@ class InventoryItem(models.Model):
             objs.append(inv)
         objs = InventoryItem.objects.bulk_create(objs)
 
-        for obj in objs:
-            stickers = [Item.objects.filter(market_hash_name__icontains=sticker).first() for sticker in data[obj.assetid].get('stickers',[])
-                         if Item.objects.filter(market_hash_name__icontains=sticker).exists()]
-            if len(stickers) == 0:
-                continue 
-            obj.addons.add(*stickers)
+        for obj in objs:                                # Stickers m2m field logic
+            data_stickers = data[obj.assetid]
+            for sticker in data_stickers.get('stickers',[]):
+                if sticker not in sticker_names:
+                    continue
+                InventoryAddon.objects.create(
+                    inventory=obj,
+                    addon=Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker).first()
+                )
         InventoryItem.objects.exclude(owner=user,assetid__in=assetids).delete()

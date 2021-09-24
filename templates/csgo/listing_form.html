@@ -1,0 +1,18 @@
+{% extends 'base/base.html' %} {% load crispy_forms_tags %} {% block content %}
+<div class="container">
+
+    <div class="row">
+        <div class="col">
+            {% if user.is_authenticated and backends.associated %}
+            asds
+            <hr>
+            {% endif %}
+            <form action="" method="post">
+                {% csrf_token %} {{form|crispy}}
+                <button class="btn btn-primary" type="submit">Submit</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}

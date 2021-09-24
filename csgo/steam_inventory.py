@@ -17,19 +17,18 @@ class Inventory:
         if not item.get('actions',None) or not item.get('marketable',None):
             return False
         return True
-
-    @staticmethod
-    def clean_item(item,keys=clean_fields):                                 # Very buggy, Throws random errors
-        for key in keys:
-            item.pop(key,None)
     
     @staticmethod
     def get_float_inplace(inspect_url,float_api="https://api.csgofloat.com/?url={inspect_url}"):
         url = float_api.format(inspect_url=inspect_url)
-        float = requests.get(url).json()
-
-        float = float.get('iteminfo')
-        return float.get('floatvalue',0)
+        r = requests.get(url,timeout=2)
+        if r.status_code == 200:
+            data = r.json()
+            float = data.get('iteminfo',0)
+            return float.get('floatvalue',0)
+        else:
+            print(r.text)
+            return 0
 
     def format_inspect_url_inplace(self,item):
         steamid = str(self.steamid)
@@ -66,14 +65,13 @@ class Inventory:
         for key,val in assets.copy().items():
             assets[key].update(descriptions[val['classid']])
 
-            self.format_inspect_url_inplace(assets[key])
-            self.format_icon_inplace(assets[key])
-            self.format_sticker_inplace(assets[key])
-        
-        for key,val in assets.copy().items():
             if not self.is_marketable(assets[key]):
                 assets.pop(key)
                 continue
+
+            self.format_inspect_url_inplace(assets[key])
+            self.format_icon_inplace(assets[key])
+            self.format_sticker_inplace(assets[key])
         
         self.data = assets
         return assets

@@ -42,3 +42,13 @@ STEAM ITEM PIPELINE:
     - XSS attacks
     - Form edits & cleaning
     - Total queries on db
+
+# Constraints
+    If object exists dont create
+    If object name doesn't exists in db dont create inventory item
+    Add quantity to addon quantity if addon is duplicated
+
+# Program Flow
+    Get inventory data
+    create list to store data
+    loop through data

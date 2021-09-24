@@ -1,0 +1,159 @@
+{% extends 'base/base.html' %} {% block content %}
+{% load static %}
+{% block css %}
+<!-- morris css -->
+{% endblock css %}
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="row p-3">
+            <div class="col-12 col-md-6 p-2">
+                <div class="card bg-light" style="height: 100%;">
+                    <div class="card-block d-flex" style="height: 100%;">
+                        <img src="{{listing.item.get_icon}}" class="img-fluid sticker-fix" alt="Image">
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 p-2">
+                <div class="card" style="height: 100%;">
+
+                    <table class="table table-align" style="height: 100%;">
+                        <tbody>
+                            <tr>
+                                <td style="white-space: normal;">Market name</td>
+                                <td style="white-space: normal;">{{listing.item.market_hash_name}}</td>
+                            </tr>
+                            <tr>
+                                <td>Type</td>
+                                <td>{{listing.item.type}}</td>
+                            </tr>
+                            <tr>
+                                <td>Rarity</td>
+                                <td><span style="color:#{{listing.item.rarity_color}}">{{listing.item.rarity}}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Exterior</td>
+                                <td style="white-space: normal;">{{listing.item.exterior}}</td>
+                            </tr>
+                            <tr>
+                                <td>Float</td>
+                                <td>{{listing.float}}</td>
+                            </tr>
+                            {% if listing.item.stattrak %}
+                            <tr>
+                                <td>Stattrak™</td>
+                                <td>{{listing.item.stattrak}}</td>
+                            </tr>
+                            {% endif %} {% if listing.item.souvenir %}
+                            <tr>
+                                <td>Souvenir</td>
+                                <td>{{listing.item.souvenir}},{{listing.item.tournament}}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-12 p-2">
+                <div class="row bg-white m-0">
+                    <div class="col-12 col-md-6">
+                        <div class="">
+                            <table class="table table-align">
+                                <tbody>
+                                    <tr>
+                                        <td style="white-space: normal;">Wants to</td>
+                                        <td>Sell</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Price</td>
+                                        <td>{{listing.price}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Inspect link</td>
+                                        <td><a href="{{listing.inventory.inspect_url}}" class="btn btn-sm btn-success">Inspect InGame</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Owner</td>
+                                        <td>{{listing.owner}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="white-space: normal;">Date listed</td>
+                                        <td class="text-break" style="white-space: normal;">{{listing.date_created}}</td>
+                                    </tr>
+
+                                    <tr style="overflow: hidden;">
+                                        <td>Stickers attached</td>
+                                        <td class="text-break" style="overflow: hidden;white-space: normal;">
+                                            {% for addon in listing.addons.all %}
+                                            <span class="badge badge-pill text-white p-1 copy-text" style="background: #{{addon.rarity_color}};cursor: pointer;" 
+                                            data-clipboard-text="{{addon.market_hash_name}}" data-toggle="tooltip" data-html="true" 
+                                            title="<img src='{{addon.get_icon_small}}' width='100px' class='img-fluid' >">
+                                                {{addon.name}}
+                                            </span> 
+                                            {% empty %}
+                                                <span>None</span>
+                                            {% endfor %}
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="d-flex" style="height: 100%;">
+                            <div class="card-block m-auto">
+                                <canvas id="myChart" width="400" height="400"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js" integrity="sha256-bC3LCZCwKeehY6T4fFi9VfOU0gztUa+S4cnkIhVPZ5E=" crossorigin="anonymous"></script>
+<script>
+$.get('{% url "csgo:price" market_hash_name=listing.item.market_hash_name %}',function(data){
+    var listed = {{listing.price}};
+    var min_listed = data['min_listed'];
+    var steam_current = data['average_price'];
+    var steam_median = data['median_price'];
+    var ctx = $('#myChart');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Listed price','Lowest listed price','Steam current', 'Steam Median'],
+            datasets: [{
+                label: 'Price in NPR',
+                data: [listed,min_listed, steam_current, steam_median],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 0.5
+            }]
+        },
+    });
+})
+
+
+
+
+</script>
+
+{% endblock js %}

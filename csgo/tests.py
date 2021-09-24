@@ -7,7 +7,92 @@ import requests
 from .steam_inventory import Inventory
 from .parsers import get_csgo_items
 from .models import InventoryItem, Item,Listing
+from .forms import ListingCreateForm,InventoryCreateForm
+
 from user.models import User
+
+
+class InventoryIntegrationTest(TestCase):
+    
+    def setUp(self):
+        user = get_user_model()
+        user_instance = user.objects.create(
+            email='test@demo.com',
+            username='test',
+            password='test'
+            )
+        social_user = UserSocialAuth(
+            user=user_instance,
+            provider='steam',
+            uid = 76561198323043075
+            )
+        social_user.save()
+        self.user = user_instance
+        
+        Item.get_update()
+        InventoryItem.update_inventory(user_instance)
+    
+    # Item test
+    def test_item_availability(self,item_name='AK-47 | Aquamarine Revenge (Factory New)'):
+        item = Item.objects.filter(market_hash_name=item_name).exists()
+        self.assertTrue(item)
+
+    def test_item_icon(self,item_name='AK-47 | Aquamarine Revenge (Factory New)'):
+        item = Item.objects.get(market_hash_name=item_name)
+        icon = item.get_icon_small()
+        response = requests.get(icon)
+        status_code = response.status_code
+        self.assertEqual(status_code,200)
+
+    # Inventory Test
+    def test_update_inventory(self):
+        query = InventoryItem.objects.all().exists()
+        sticker_check = InventoryItem.objects.filter(item__market_hash_name='P90 | Ancient Earth (Factory New)')
+        self.assertAlmostEqual(sticker_check.first().float,	0.04951510578393936,msg='Item float error')
+        self.assertTrue(sticker_check.first().addons.all().exists())
+        self.assertTrue(query)
+
+
+
+
+def create_test_item_instance(name='AK-47 | Aquamarine Revenge (Factory New)',type='weapon'):
+    return Item.objects.create(
+                name='Aquamarine Revenge',
+                market_hash_name=name,
+                icon_url='''-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09
+                            -5gZKKkPLLMrfFqWdY781lxLuW8Njw31Dn8xc_YTqmJ4DDJFM2ZwqE_ATtx-u7g8C5vpjOzHM263E8pSGKJ1XuG9M''',
+                type=type,
+                sub_type='AK-47',
+                exterior='Factory New',
+                rarity='Covert',
+                rarity_color='eb4b4b',
+                )
+
+
+class InventoryUpdateTest(TestCase):
+    def setUp(self):
+        user = get_user_model()
+        user_instance = user.objects.create(
+            email='test@demo.com',
+            username='test',
+            password='test'
+            )
+        social_user = UserSocialAuth(
+            user=user_instance,
+            provider='steam',
+            uid = 76561198323043075
+            )
+        social_user.save()
+        self.user = user_instance
+        Item.get_update()
+        InventoryItem.update_inventory(user_instance)
+
+    def test_update_inventory(self):
+        query = InventoryItem.objects.all().exists()
+
+        sticker_check = InventoryItem.objects.filter(item__market_hash_name='P90 | Ancient Earth (Factory New)').first().addons.all().exists()
+        self.assertTrue(sticker_check)
+        self.assertTrue(query)
 
 class InventoryTest(TestCase):
     
@@ -62,6 +147,12 @@ class ItemTest(TestCase):
         item = Item.objects.get(market_hash_name=item_name)
         self.assertEqual(item.__str__(),item.market_hash_name)
         
+    def test_get_update(self):
+        no_item = len(Item.objects.all())
+        Item.get_update()
+        no_item_updated = len(Item.objects.all())
+
+        self.assertGreaterEqual(no_item_updated,no_item)
 
 class ListingTest(TestCase):
 
@@ -129,5 +220,78 @@ class ListingTest(TestCase):
         self.assertEqual(listing.__str__(),listing.item.market_hash_name)
 
 
+class ListingCreateFormTest(TestCase):
+    def setUp(self):
+        create_test_item_instance()
+        create_test_item_instance('Sticker1','sticker')
+        create_test_item_instance('Sticker2','sticker')
+        create_test_item_instance('Sticker3','sticker')
+        user = get_user_model()
+        user_instance = user.objects.create(
+            email='test@demo.com',
+            username='test',
+            password='test'
+            )
+        social_user = UserSocialAuth(
+            user=user_instance,
+            provider='steam',
+            uid = 76561198323043075
+            )
+        social_user.save()
+        self.user = user_instance
+        self.form = ListingCreateForm
+        self.item = Item.objects.first()
+        self.addons = Item.objects.filter(type='sticker')[:4]
 
+    def test_form(self):
+        form = self.form(
+            {
+                'item':self.item,
+                'float':0.3,
+                'price':123,
+                'addons':self.addons
 
+            }
+        )
+        valid = form.is_valid()
+        self.assertTrue(valid)
+
+        ins=form.save(commit=False)
+        
+        ins.owner = self.user
+        ins.save()
+        form.save_m2m()
+        self.assertIsInstance(ins,Listing)
+        addons = Listing.objects.get(item=self.item).addons.all()
+        
+        self.assertTrue(addons.exists())
+
+# class InventoryCreateFormTest(TestCase):
+#     def setUp(self):
+#         create_test_item_instance()
+#         create_test_item_instance('sticker1','sticker')
+#         user = get_user_model()
+#         user_instance = user.objects.create(
+#             email='test@demo.com',
+#             username='test',
+#             password='test'
+#             )
+#         social_user = UserSocialAuth(
+#             user=user_instance,
+#             provider='steam',
+#             uid = 76561198323043075
+#             )
+#         social_user.save()
+#         self.user = user_instance
+        
+        
+#     def test_create(self):
+#         inv_item = InventoryItem.objects.create(
+#             owner=self.user,
+#             item=self.item,
+#             classid=123,
+#             instanceid=123,
+#             assetid=123,
+#             float=0.03,
+#             inspect_url='asd'
+#         )

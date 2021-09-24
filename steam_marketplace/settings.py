@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-
     'debug_toolbar',
     'social_django',
     'django_select2',
@@ -38,6 +37,7 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'crispy_forms',
+    'django_filters',
 
     'user',
     'csgo',
@@ -68,7 +68,7 @@ ROOT_URLCONF = 'steam_marketplace.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'base_file','templates')],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -82,7 +82,7 @@ TEMPLATES = [
         },
     },
 ]
-STATICFILES_DIRS = [os.path.join(BASE_DIR,'base_file','static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
 
 
 WSGI_APPLICATION = 'steam_marketplace.wsgi.application'

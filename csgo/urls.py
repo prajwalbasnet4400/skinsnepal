@@ -1,3 +1,4 @@
+from csgo import api_views
 from django.urls import path,include
 from . import views
 from .rest import views as rest_views
@@ -19,7 +20,6 @@ listing_patterns = [
     path('create/',views.ListingCreateView.as_view()),
     path('detail/<str:pk>/',views.ListingDetailView.as_view(),name='detail'),
     path('delete/<str:pk>/',views.ListingDeleteView.as_view()),
-    path('update/<str:pk>/',views.ListingUpdateView.as_view()),
 ]
 
 
@@ -27,9 +27,10 @@ listing_patterns = [
 urlpatterns = [
     path('',include(base_patterns)),
     path('listing/', include(listing_patterns),name='listing'),
-    path('inventory/', views.InventoryView.as_view(),name='inventory'),
-    path('inventory/create', views.test,name='test'),
-    path('inventory/update', views.test2),
+    path('inventory/', views.InventoryListView.as_view(),name='inventory'),
+    path('inventory/create', views.InventoryCreateView.as_view(),name='inventory_create'),
     
+    path('item/price/<str:market_hash_name>/', api_views.get_price,name='price'),
+    path('inventory/update', views.test2),
     # path('api/', include(router.urls)), #API disabled for now
 ]
