@@ -7,8 +7,9 @@ from django.urls import reverse
 from django.db.models import Q
 import datetime
 
-from .parsers import get_csgo_items
-from csgo.steam_inventory import Inventory
+from .api_parsers.parsers import get_csgo_items
+from .api_parsers.steam_inventory import Inventory
+
 avatar_url = settings.STEAM_AVATAR_URL
 
 class Item(models.Model):
@@ -48,7 +49,7 @@ class Item(models.Model):
             souvenir=item.get('souvenir'),
             tournament=item.get('tournament'),
         ) for item in items]
-        Item.objects.bulk_create(obs,ignore_conflicts=True)
+        return len(Item.objects.bulk_create(obs,ignore_conflicts=True))
 
     def get_icon(self):
         url = avatar_url
@@ -68,42 +69,71 @@ class Item(models.Model):
     
 
 class Listing(models.Model):
+    TRA = "TRADE"
+    SEL = "SELL"
+    AUC = "AUCTION"
+
+    PURPOSE_CHOIES = (
+        (TRA,"TRADE"),
+        (SEL,"SELL"),
+        (AUC,"AUCTION"))
+
+
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,null=False)
-    item = models.ForeignKey(Item, models.CASCADE,null=False)
-    inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True)
-
-    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)])
+    inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True,related_name='listed')
     price = models.PositiveBigIntegerField(validators=[MinValueValidator(1)],null=False,blank=False)
-    tradable = models.BooleanField(default=True)
+    date_listed = models.DateTimeField(auto_now_add=True)
+    purpose = models.CharField(max_length=32,choices=PURPOSE_CHOIES,default="TRADE")
 
-    date_created = models.DateTimeField(auto_now_add=True)
-    addons = models.ManyToManyField(Item,related_name='addons',blank=True,through='ListingAddon')
+    def state(self):
+        return self.inventory.item_state
+
+    def float(self):
+        return self.inventory.float
+
+    def addons(self):
+        return self.inventory.addons.all()
     
-    class Meta:
-        ordering = ('-date_created',)
-        constraints = [
-            UniqueConstraint(fields=['owner','assetid'],name='unique_inventory_listing')
-        ]
+    def item(self):
+        return self.inventory.item
+
+    def get_icon(self):
+        return self.inventory.item.get_icon()
+
+    def get_icon_small(self):
+        return self.inventory.item.get_icon_small()
 
     def delete(self,*args, **kwargs):
         if self.inventory:
-            self.inventory.is_listed = False
+            self.inventory.item_state = InventoryItem.INV
             self.inventory.save()
         super().delete(*args, **kwargs)
 
-    def __str__(self):
-        return self.item.market_hash_name
-    
     def get_absolute_url(self):
         return reverse('csgo:detail', args=[str(self.id)])
+    
+    def __str__(self):
+        return self.inventory.item.market_hash_name
 
-class ListingAddon(models.Model):
+    def in_cart(self,user):
+        return user.cart.item.filter(pk=self.pk).exists()
+    
+
+class Cart(models.Model):
+    owner = models.OneToOneField(get_user_model(),on_delete=models.CASCADE,related_name='cart')
+    item = models.ManyToManyField(Listing,related_name='cart_items',through='CartItem')
+    
+    def total_items(self):
+        return self.item.all().count()
+    def __str__(self):
+        return self.owner.username
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart,models.CASCADE)
     listing = models.ForeignKey(Listing,models.CASCADE)
-    addon = models.ForeignKey(Item,models.CASCADE)
 
     def __str__(self):
-        return self.addon.name
-
+        return f"{self.cart.owner.username}"
 
 class InventoryAddon(models.Model):
     inventory = models.ForeignKey('InventoryItem',models.CASCADE)
@@ -112,7 +142,18 @@ class InventoryAddon(models.Model):
     def __str__(self):
         return f"{self.addon.name}"
 
+
 class InventoryItem(models.Model):
+    INV = "INVENTORY"
+    LIS = "LISTED"
+    TRA = "TRANSACTION"
+    SOL = "SOLD"
+
+    ITEM_STATE_CHOICES = (
+        (INV,"INVENTORY"),
+        (LIS,"LISTED"),
+        (TRA,"TRANSACTION"),
+        (SOL,"SOLD"),)
 
     owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE,related_name='inventory') 
     item = models.ForeignKey(Item,on_delete=models.CASCADE,related_name='_inventory')
@@ -121,21 +162,33 @@ class InventoryItem(models.Model):
     instanceid = models.CharField(max_length=128)
     assetid = models.CharField(max_length=128)
 
+    paintindex = models.CharField(max_length=16,blank=False)
+    paintseed = models.CharField(max_length=16,blank=False)
     float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
+
     addons = models.ManyToManyField(Item,blank=True,through='InventoryAddon')
     tradable = models.BooleanField(default=True)
     inspect_url = models.TextField()
 
-    is_listed = models.BooleanField(default=False)
+    item_state = models.CharField(max_length=32,choices=ITEM_STATE_CHOICES,default="INVENTORY")
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ('is_listed',)
         constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
 
     def __str__(self):
         return self.item.market_hash_name
     
+    def is_listed(self):
+        if not self.item_state == self.LIS:
+            return False
+        return True
+
+    def is_sold(self):
+        if not self.item_state == self.SOL:
+            return False
+        return True
+
     @staticmethod
     def rate_limited(owner):
         latest_obj = InventoryItem.objects.filter(owner=owner).latest('last_updated')
@@ -162,7 +215,7 @@ class InventoryItem(models.Model):
             for sticker in item.get('stickers',[]):
                 sticker_names.add(sticker)
 
-        existing_items = {item.market_hash_name:item for item in Item.objects.filter(market_hash_name__in=names)}   # TODO:Convert it to in_bulk() method
+        existing_items = Item.objects.in_bulk(names,field_name='market_hash_name')
         existing_inv = InventoryItem.objects.filter(assetid__in=assetids).values_list('assetid',flat=True)
 
         for item in data.values():
@@ -170,7 +223,6 @@ class InventoryItem(models.Model):
                 continue
             if item.get('assetid') in existing_inv:
                 continue
-            float = Inventory.get_float_inplace(item['inspect_url'])
             inv =InventoryItem(
                 owner=user,
                 item=existing_items.get(item['market_hash_name']),
@@ -179,7 +231,10 @@ class InventoryItem(models.Model):
                 assetid=item['assetid'],
                 tradable=item['tradable'],
                 inspect_url=item['inspect_url'],
-                float=float)
+                float=item['float'],
+                paintindex=item['paintindex'],
+                paintseed=item['paintseed']
+                )
             objs.append(inv)
         objs = InventoryItem.objects.bulk_create(objs)
 
@@ -192,4 +247,48 @@ class InventoryItem(models.Model):
                     inventory=obj,
                     addon=Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker).first()
                 )
-        InventoryItem.objects.exclude(owner=user,assetid__in=assetids).delete()
+        InventoryItem.objects.exclude(owner=user,assetid__in=assetids,item_state__in=[InventoryItem.SOL,InventoryItem.TRA]).delete()
+
+
+class Transaction(models.Model):
+    ESW = "ESEWA"
+    KHT = "KHALTI"
+    BNK = "BANK"
+    
+    PPD = "PAYMENT PENDING"
+    PCM = "PAYMENT COMPLETE"
+    TST = "TRADE SENT"
+    TAC = "TRADE ACCEPTED"
+    FTF = "FUNDS TRANSFERRED"
+    TCM = "TRANSACTION COMPLETE"
+
+    BYE = "BUYER ERROR"
+    SEE = "SELLER ERROR"
+
+    PAYMENT_METHOD_CHOICES = (
+        (ESW,"ESEWA"),
+        (KHT,"KHALTI"),
+        (BNK,"BANK"),
+        )
+    
+    STATE_CHOICES = (
+        (PPD,"PAYMENT PENDING"),
+        (PCM,"PAYMENT COMPLETE"),
+        (TST,"TRADE SENT"),
+        (TAC,"TRADE ACCEPTED"),
+        (FTF,"FUNDS TRANSFERRED"),
+        (TCM,"TRANSACTION COMPLETE"),
+        (BYE,"BUYER ERROR"),
+        (SEE,"SELLER ERROR"),
+        )
+    
+    buyer = models.OneToOneField(get_user_model(),on_delete=models.CASCADE)
+    listing = models.OneToOneField(Listing,on_delete=models.CASCADE)
+    payment_method = models.CharField(max_length=64,choices=PAYMENT_METHOD_CHOICES)
+    state = models.CharField(max_length=64,choices=STATE_CHOICES)
+    
+    trade_sent_screenshot = models.ImageField()
+    trade_recv_screenshot = models.ImageField()
+
+    state_last_changed = models.DateTimeField(auto_now=True)
+    transaction_started = models.DateTimeField(auto_now_add=True)

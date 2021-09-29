@@ -9,46 +9,34 @@ CSGO MARKET API
 - CSGO
 
 Inventory Apis:
-    https://steamcommunity.com/inventory/76561198323043075/730/2?l=english > Better
-    https://steamcommunity.com/profiles/76561198323043075/inventory/json/730/2
+    - https://steamcommunity.com/inventory/76561198323043075/730/2?l=english > Better
+    - https://steamcommunity.com/profiles/76561198323043075/inventory/json/730/2
 
 Market Price Apis:
-    https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=<MARKET_HASH_NAME>
+    - https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=<MARKET_HASH_NAME>
 
 External Apis:
     -Float: $ Host yourself, api limited
-        https://api.csgofloat.com/?s=76561198323043075&a=23298953657&d=14015950396690719237 > s,a,d from steam inspect link
+        - https://api.csgofloat.com/?s=76561198323043075&a=23298953657&d=14015950396690719237 > s,a,d from steam inspect link
 
 
 STEAM ITEM PIPELINE:
     -https://steamcommunity.com/inventory/76561198323043075/730/2?l=english: Get inventory
         - Data is in rgInventory
-        - DataDiscription is is rgDiscriptions
-            -Get steamid64
-            -Get Item with your market_hash_name in DataDiscription
-            -Get asset id of skin, marked id in rgInventory
-            -Construct weapon inspect link
-            -Get float value at csgofloat.com api
-            -Create listing with all the gathered data
+        - DataDiscription is is rgDiscriptions:
+            - Get steamid64
+            - Get Item with your market_hash_name in DataDiscription
+            - Get asset id of skin, marked id in rgInventory
+            - Construct weapon inspect link
+            - Get float value at csgofloat.com api
+            - Create listing with all the gathered data
 
+SHOP PAYMENT INGEGRATION PIPELINE:
+    - Seller `LISTS` skin on our platform created as Listing model
+    - Buyer `BUYS` the skin using esewa payment gateway // Money is delivered to server wallet
+    - The Listing is now hidden from the market until the transaction completes
+    - Sever is notified of payment and notifies the `SELLER` to send the trade offer // Seller sends a screenshot for verification
+    - Server after receiveing the screenshot notifies the `BUYER` to accept the trade offer// Buyer sends a screenshot for verification
+    - Then the money is transferred to the `SELLER` after deducting a % as a transaction fee.
+    - The `Listing`, `Seller`, `Buyer` and `Payement receipt` are stored in the database permanently 
 
-
-- BUGS:
-    steam_inventory
-
-
-- Test:
-    - CSRF attacks on every form
-    - XSS attacks
-    - Form edits & cleaning
-    - Total queries on db
-
-# Constraints
-    If object exists dont create
-    If object name doesn't exists in db dont create inventory item
-    Add quantity to addon quantity if addon is duplicated
-
-# Program Flow
-    Get inventory data
-    create list to store data
-    loop through data

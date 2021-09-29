@@ -4,10 +4,10 @@ from django.contrib.auth import get_user_model
 from social_django.models import UserSocialAuth
 import requests
 
-from .steam_inventory import Inventory
-from .parsers import get_csgo_items
+from .api_parsers.steam_inventory import Inventory
+from .api_parsers.parsers import get_csgo_items
 from .models import InventoryItem, Item,Listing
-from .forms import ListingCreateForm,InventoryCreateForm
+from .forms import InventoryCreateForm
 
 from user.models import User
 
@@ -218,53 +218,6 @@ class ListingTest(TestCase):
     def test_str(self):
         listing = Listing.objects.first()
         self.assertEqual(listing.__str__(),listing.item.market_hash_name)
-
-
-class ListingCreateFormTest(TestCase):
-    def setUp(self):
-        create_test_item_instance()
-        create_test_item_instance('Sticker1','sticker')
-        create_test_item_instance('Sticker2','sticker')
-        create_test_item_instance('Sticker3','sticker')
-        user = get_user_model()
-        user_instance = user.objects.create(
-            email='test@demo.com',
-            username='test',
-            password='test'
-            )
-        social_user = UserSocialAuth(
-            user=user_instance,
-            provider='steam',
-            uid = 76561198323043075
-            )
-        social_user.save()
-        self.user = user_instance
-        self.form = ListingCreateForm
-        self.item = Item.objects.first()
-        self.addons = Item.objects.filter(type='sticker')[:4]
-
-    def test_form(self):
-        form = self.form(
-            {
-                'item':self.item,
-                'float':0.3,
-                'price':123,
-                'addons':self.addons
-
-            }
-        )
-        valid = form.is_valid()
-        self.assertTrue(valid)
-
-        ins=form.save(commit=False)
-        
-        ins.owner = self.user
-        ins.save()
-        form.save_m2m()
-        self.assertIsInstance(ins,Listing)
-        addons = Listing.objects.get(item=self.item).addons.all()
-        
-        self.assertTrue(addons.exists())
 
 # class InventoryCreateFormTest(TestCase):
 #     def setUp(self):

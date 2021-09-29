@@ -2,7 +2,7 @@
 
 
 {% block content %}
-<div class="container">
+<div class="container text-white">
     <div class="row">
         <div class="col">
             <div class="text-right">
@@ -11,7 +11,8 @@
             <div>
                 <ol>
                     {% csrf_token %}
-                    {% for item in data %}
+                    <h1>Inventory items:</h1>
+                    {% for item in inventory %}
                     <li>
                         {{item.item.market_hash_name}} <img src="{{item.item.get_icon_small}}" loading="lazy" height="64px" width="64px" alt="">
                         | {% for addon in item.addons.all %}
@@ -24,7 +25,52 @@
                         {% endif %}
                     </li>
                     {% endfor %}
-    
+                    
+                    <h1>Listed items:</h1>
+                    {% for item in listed %}
+                    <li>
+                        {{item.item.market_hash_name}} <img src="{{item.item.get_icon_small}}" loading="lazy" height="64px" width="64px" alt="">
+                        | {% for addon in item.addons.all %}
+                        {{addon}},
+                        {% endfor %}
+                        {% if item.is_listed %}
+                        <input type="checkbox" disabled><small>(already listed)</small>                        
+                        {% else %}
+                        <input type="checkbox" data-assetid="{{item.assetid}}">                        
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                    
+                    <h1>In Transaction:</h1>
+                    {% for item in transaction %}
+                    <li>
+                        {{item.item.market_hash_name}} <img src="{{item.item.get_icon_small}}" loading="lazy" height="64px" width="64px" alt="">
+                        | {% for addon in item.addons.all %}
+                        {{addon}},
+                        {% endfor %}
+                        {% if item.is_listed %}
+                        <input type="checkbox" disabled><small>(already listed)</small>                        
+                        {% else %}
+                        <input type="checkbox" data-assetid="{{item.assetid}}">                        
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                    
+                    <h1>Sold items:</h1>
+                    {% for item in sold %}
+                    <li>
+                        {{item.item.market_hash_name}} <img src="{{item.item.get_icon_small}}" loading="lazy" height="64px" width="64px" alt="">
+                        | {% for addon in item.addons.all %}
+                        {{addon}},
+                        {% endfor %}
+                        {% if item.is_listed %}
+                        <input type="checkbox" disabled><small>(already listed)</small>                        
+                        {% else %}
+                        <input type="checkbox" data-assetid="{{item.assetid}}">                        
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+
                 </ol>
                 </div>
         </div>

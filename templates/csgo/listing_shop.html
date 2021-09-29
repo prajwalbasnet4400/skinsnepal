@@ -121,7 +121,7 @@
 <!-- LANGING PAGE END -->
 
 <!-- LATEST LISTING -->
-<div class="row text-white">
+<div class="row text-black">
     <form method="get">
         {{ filter.form.as_p }}
         <input type="submit" />
@@ -140,7 +140,8 @@
                     <div class="row align-items-center justify-content-center" style="height: 100%;">
                         <div class="col-12">
                             <div class="d-flex img-hover-zoom">
-                                <img class="sticker-fix" style="object-fit: contain;" loading="lazy" src="{{listing.item.get_icon}}" alt="{{listing.item.name}}">
+                                <span class="item-card-incart-text" id="in_cart">IN CART</span>
+                                <img class="sticker-fix" style="object-fit: contain;" loading="lazy" src="{{listing.get_icon}}" alt="{{listing.item.name}}">
                             </div>
                         </div>
                     </div>
@@ -150,7 +151,7 @@
                 <div class="row align-items-center justify-content-center card-active">
                     <div class="col-12">
                         <h6 class="text-center m-t-5 m-b-10" style="font-weight: bold;">
-                            {% if listing.item.sub_type %} {{listing.item.sub_type}} | {{listing.item.name}} {% else %} {{listing.item.name}} {% endif %}
+                            {% if listing.inventory.item.sub_type %} {{listing.item.sub_type}} | {{listing.item.name}} {% else %} {{listing.item.name}} {% endif %}
                         </h6>
                     </div>
                 </div>
@@ -178,4 +179,9 @@
     {% endfor %}
 </div>
 
-{% endblock content %} {% block js %} {% endblock js %}
+{% endblock content %} {% block js %} 
+<script>
+    cart = Cookies.get('cart');
+</script>
+
+{% endblock js %}

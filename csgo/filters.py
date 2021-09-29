@@ -8,6 +8,4 @@ class ListingFilter(django_filters.FilterSet):
         model = Listing
         fields = {
                     'price':['lt','gt'],
-                    'tradable':['exact'],
-                    'item__market_hash_name':['icontains']
                     }

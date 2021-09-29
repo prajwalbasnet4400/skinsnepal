@@ -12,56 +12,52 @@
 
     <!-- Favicon icon -->
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
-    <!-- fontawesome icon -->
-    <link rel="stylesheet" href="{% static 'fonts/fontawesome/css/fontawesome-all.min.css' %}">
-    <!-- animation css -->
-    <link rel="stylesheet" href="{% static 'plugins/animation/css/animate.min.css' %}">
-    <!-- vendor css -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Bootstrap css -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
+             integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <!-- Fontawesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+     integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="{% static 'fonts/font_style.css' %}"> 
+
     <!-- select2  css-->
     {{form.media.css}}
     <!-- custom css -->
-    <link rel="stylesheet" href="{% static 'css/style2.css' %}"> 
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> 
     {% block css %} {% endblock css %}
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 </head>
 
-<body>
-    <!-- [ Pre-loader ] start -->
-    <div class="loader-bg">
-        <div class="loader-track">
-            <div class="loader-fill"></div>
-        </div>
+<body style="background: #222227;min-height: 100vh;display: flex;flex-direction: column;">
+    {% include 'base/header.html' %}
+
+    {% if user.is_authenticated %}
+    <div class="cart_addon btn btn-danger" id="cart_addon">
+        <a href="{% url 'csgo:cart' %}" class="position-relative text-white fs-5">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="position-absolute top-0 left-0 translate-middle badge rounded-pill bg-success">
+                {{user.cart.total_items}}
+              <span class="visually-hidden">Total cart items</span>
+            </span>
+          </a>
     </div>
-    <!-- [ Pre-loader ] End -->
-
-    {% include 'base/sidebar.html' %} {% include 'base/header.html' %}
-
-    <!-- [ Main Content ] start -->
-    <div class="pcoded-main-container">
-        <div class="pcoded-wrapper">
-            <div class="pcoded-content">
-                <div class="pcoded-inner-content">
-                    <div class="main-body">
-                        <div class="page-wrapper">
-                            {% block content %} {% endblock content %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    {% endif %}
+    <div class="container">
+        {% block content %} {% endblock content %}
     </div>
-
+    
+    {% include 'base/footer.html' %}
     <!-- Required Js -->
-    <script src="{% static 'js/vendor-all.min.js' %}"></script>
-    <script src="{% static 'plugins/bootstrap/js/bootstrap.js' %}"></script>
-    <script src="{% static 'js/pcoded.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
-    {{form.media.js}} {% block js %} {% endblock js %}
-    <script>
-        new ClipboardJS('.copy-text');
-    </script>
-
+    {{form.media.js}}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
+     integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    {% block js %} {% endblock js %}
 </body>
 
 </html>

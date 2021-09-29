@@ -1,7 +1,6 @@
 {% extends 'base/base.html' %} {% block content %}
 {% load static %}
 {% block css %}
-<!-- morris css -->
 {% endblock css %}
 
 
@@ -21,6 +20,17 @@
 
                     <table class="table table-align" style="height: 100%;">
                         <tbody>
+                            <tr>
+                                <td style="white-space: normal;">Market name</td>
+                                <td style="white-space: normal;">
+                                <form action="" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="item" id="listing_pk" value="{{listing.pk}}">
+                                    <button type="submit" class="btn btn-outline-success" id="add-cart-btn">Add to cart</button>
+                                </form>
+                                
+                                </td>
+                            </tr>
                             <tr>
                                 <td style="white-space: normal;">Market name</td>
                                 <td style="white-space: normal;">{{listing.item.market_hash_name}}</td>
@@ -86,10 +96,8 @@
                                     <tr style="overflow: hidden;">
                                         <td>Stickers attached</td>
                                         <td class="text-break" style="overflow: hidden;white-space: normal;">
-                                            {% for addon in listing.addons.all %}
-                                            <span class="badge badge-pill text-white p-1 copy-text" style="background: #{{addon.rarity_color}};cursor: pointer;" 
-                                            data-clipboard-text="{{addon.market_hash_name}}" data-toggle="tooltip" data-html="true" 
-                                            title="<img src='{{addon.get_icon_small}}' width='100px' class='img-fluid' >">
+                                            {% for addon in listing.addons %}
+                                            <span class="badge badge-pill text-white p-1 copy-text" style="background: #{{addon.rarity_color}};cursor: pointer;" data-clipboard-text="{{addon.market_hash_name}}" data-bs-toggle="tooltip" data-bs-html="true" title="<img src='{{addon.get_icon_small}}' width='100px' class='img-fluid' >">
                                                 {{addon.name}}
                                             </span> 
                                             {% empty %}
@@ -122,6 +130,11 @@
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js" integrity="sha256-bC3LCZCwKeehY6T4fFi9VfOU0gztUa+S4cnkIhVPZ5E=" crossorigin="anonymous"></script>
 <script>
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
 $.get('{% url "csgo:price" market_hash_name=listing.item.market_hash_name %}',function(data){
     var listed = {{listing.price}};
     var min_listed = data['min_listed'];
