@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.forms.formsets import formset_factory
 
 from . import forms
-from .models import Cart, CartItem, Listing,InventoryItem
+from .models import Cart, CartItem, Listing,InventoryItem, Transaction
 from .filters import ListingFilter
 
 class Index(TemplateView):
@@ -129,6 +129,12 @@ class CheckoutView(TemplateView):
         context['item'] = CartItem.objects.get(cart=cart,pk=self.kwargs.get('pk'))
         return context
 
+class TransactionView(DetailView):
+    model = Transaction
+    template_name = 'csgo/transaction.html'
+    context_object_name = 'transaction'
+
+
 class InventoryCreateView(CreateView):
     template_name = 'base/base/test.html'
     form_class = forms.InventoryCreateForm
@@ -178,11 +184,7 @@ class InventoryCreateView(CreateView):
             return HttpResponse('createdlisting')
         ctx = {'form':form}
         return render(request,'base/test.html',ctx)
-    
-
-
-
 
 def test2(request,*args, **kwargs):
-    InventoryItem.update_inventory(request.user)
+    InventoryItem.updates.update_inventory(request.user)
     return render(request,'base/test.html')

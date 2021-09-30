@@ -2,13 +2,10 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.validators import MinValueValidator,MaxValueValidator
-from django.db.models.constraints import UniqueConstraint
 from django.urls import reverse   
-from django.db.models import Q
 import datetime
 
 from .api_parsers.parsers import get_csgo_items
-from .api_parsers.steam_inventory import Inventory
 
 avatar_url = settings.STEAM_AVATAR_URL
 
@@ -172,6 +169,7 @@ class InventoryItem(models.Model):
 
     item_state = models.CharField(max_length=32,choices=ITEM_STATE_CHOICES,default="INVENTORY")
     last_updated = models.DateTimeField(auto_now=True)
+    in_inventory = models.BooleanField(default=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
@@ -188,67 +186,6 @@ class InventoryItem(models.Model):
         if not self.item_state == self.SOL:
             return False
         return True
-
-    @staticmethod
-    def rate_limited(owner):
-        latest_obj = InventoryItem.objects.filter(owner=owner).latest('last_updated')
-        current_time = datetime.datetime.now(datetime.timezone.utc)
-        last_updated = current_time - latest_obj.last_updated
-        print(last_updated)
-        if last_updated.total_seconds() <= 60:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def update_inventory(user):
-        inv = Inventory(user.steamid())
-        data = inv.get_data()
-        objs = []
-        assetids = []
-        names = set()
-        sticker_names = set()
-
-        for item in data.values():
-            assetids.append(item['assetid'])
-            names.add(item['market_hash_name'])
-            for sticker in item.get('stickers',[]):
-                sticker_names.add(sticker)
-
-        existing_items = Item.objects.in_bulk(names,field_name='market_hash_name')
-        existing_inv = InventoryItem.objects.filter(assetid__in=assetids).values_list('assetid',flat=True)
-
-        for item in data.values():
-            if not item.get('market_hash_name') in existing_items.keys():
-                continue
-            if item.get('assetid') in existing_inv:
-                continue
-            inv =InventoryItem(
-                owner=user,
-                item=existing_items.get(item['market_hash_name']),
-                classid=item['classid'],
-                instanceid=item['instanceid'],
-                assetid=item['assetid'],
-                tradable=item['tradable'],
-                inspect_url=item['inspect_url'],
-                float=item['float'],
-                paintindex=item['paintindex'],
-                paintseed=item['paintseed']
-                )
-            objs.append(inv)
-        objs = InventoryItem.objects.bulk_create(objs)
-
-        for obj in objs:                                # Stickers m2m field logic
-            data_stickers = data[obj.assetid]
-            for sticker in data_stickers.get('stickers',[]):
-                if sticker not in sticker_names:
-                    continue
-                InventoryAddon.objects.create(
-                    inventory=obj,
-                    addon=Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker).first()
-                )
-        InventoryItem.objects.exclude(owner=user,assetid__in=assetids,item_state__in=[InventoryItem.SOL,InventoryItem.TRA]).delete()
-
 
 class Transaction(models.Model):
     ESW = "ESEWA"
@@ -283,8 +220,8 @@ class Transaction(models.Model):
         )
     
     buyer = models.OneToOneField(get_user_model(),on_delete=models.CASCADE)
-    listing = models.OneToOneField(Listing,on_delete=models.CASCADE)
-    payment_method = models.CharField(max_length=64,choices=PAYMENT_METHOD_CHOICES)
+    listing = models.OneToOneField(Listing,on_delete=models.CASCADE,related_name='transaction')
+    payment_method = models.CharField(max_length=64,choices=PAYMENT_METHOD_CHOICES,default=ESW)
     state = models.CharField(max_length=64,choices=STATE_CHOICES)
     
     trade_sent_screenshot = models.ImageField()
@@ -292,3 +229,20 @@ class Transaction(models.Model):
 
     state_last_changed = models.DateTimeField(auto_now=True)
     transaction_started = models.DateTimeField(auto_now_add=True)
+
+    def save(self,*args, **kwargs):
+        if not self.pk:
+            inventory = self.listing.inventory
+            inventory.item_state = InventoryItem.TRA
+            inventory.save()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.buyer}-{self.pk}-{self.state}"
+
+    def buyer_paid(self):                                               # Integrate with payment gateway
+        return True
+    
+    def seller_paid(self):
+        return False

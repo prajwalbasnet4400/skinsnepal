@@ -40,3 +40,13 @@ SHOP PAYMENT INGEGRATION PIPELINE:
     - Then the money is transferred to the `SELLER` after deducting a % as a transaction fee.
     - The `Listing`, `Seller`, `Buyer` and `Payement receipt` are stored in the database permanently 
 
+Reputation system:
+    - Grade the users on platform based on previous sales and transaction
+    - Allow the users to write review on other user's profile
+
+
+Trusted seller program:
+    - Require steam web API key
+    - Allows us to verify trade and track items regardless of the unique id change
+    - More fine grain control of trade transaction
+

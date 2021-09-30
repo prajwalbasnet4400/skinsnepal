@@ -1,0 +1,49 @@
+{% extends 'base/base.html' %} {% load crispy_forms_tags %} {% block content %}
+<div class="container text-white">
+    <div class="row">
+        
+        <div class="col">
+            <h1>
+                Progress:
+            </h1>
+            <p>
+                (Buyer)Payment > (Seller)Trade Sent > (Buyer)Trade Accepted > Transaction Complete
+            </p><hr>
+            <div class="row">
+                <div class="col">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            transaction id : {{transaction.pk}}
+                        </li>
+                        <li class="list-group-item">
+                            buyer : {{transaction.buyer}}
+                        </li>
+                        <li class="list-group-item">
+                            listing : {{transaction.listing}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction payment_method : {{transaction.payment_method}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction state : {{transaction.state}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction sent ss : {{transaction.trade_sent_screenshot}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction recv ss : {{transaction.recv_screenshot}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction state last changed : {{transaction.state_last_changed}}
+                        </li>
+                        <li class="list-group-item">
+                            transaction started : {{transaction.transaction_started}}
+                        </li>
+                      </ul>
+                </div>
+            </div>
+                
+        </div>
+</div>
+</div>
+{% endblock content %}

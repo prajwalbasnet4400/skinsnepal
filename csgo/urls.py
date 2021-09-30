@@ -28,6 +28,7 @@ listing_patterns = [
 
     path('cart/', views.CartView.as_view(),name='cart'),
     path('checkout/<str:pk>/', views.CheckoutView.as_view(),name='checkout'),
+    path('transaction/<str:pk>/', views.TransactionView.as_view(),name='transaction'),
 ]
 
 
