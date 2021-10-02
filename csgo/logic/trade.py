@@ -8,19 +8,18 @@ class TradeLogic:
         self.seller = seller
         self.listing = listing
 
-        buyer_inv = Inventory(buyer)
-        buyer_inv.update_inventory()
-        seller_inv = Inventory(buyer)
-        seller_inv.update_inventory()
+        self.update_inv()
+        self.get_inv()
+        self.transaction, _ = Transaction.objects.get_or_create(buyer=buyer,listing=listing)
+
+    def update_inv(self):
+        Inventory(self.seller).update_inventory()
+        Inventory(self.buyer).update_inventory()
+    
+    def get_inv(self):
+        self.buyer_inventory = InventoryItem.objects.filter(owner=self.buyer)
+        self.seller_inventory = InventoryItem.objects.filter(owner=self.seller)
         
-        self.transaction = Transaction.objects.get_or_create(buyer=buyer,listing=listing)
-        self.buyer_inventory = InventoryItem.objects.filter(owner=buyer)
-        self.seller_inventory = InventoryItem.objects.filter(owner=seller)
-
-    def update_inventory(self):
-        InventoryItem.updates.update_inventory(self.buyer)
-        InventoryItem.updates.update_inventory(self.seller)
-
     def buyer_paid(self):                                                   # Currently set to always True TODO: Implement payment gateway
         return self.listing.transaction.buyer_paid()
 

@@ -224,8 +224,8 @@ class Transaction(models.Model):
     payment_method = models.CharField(max_length=64,choices=PAYMENT_METHOD_CHOICES,default=ESW)
     state = models.CharField(max_length=64,choices=STATE_CHOICES)
     
-    trade_sent_screenshot = models.ImageField()
-    trade_recv_screenshot = models.ImageField()
+    trade_sent_screenshot = models.ImageField(upload_to='uploads')
+    trade_recv_screenshot = models.ImageField(upload_to='uploads')
 
     state_last_changed = models.DateTimeField(auto_now=True)
     transaction_started = models.DateTimeField(auto_now_add=True)
@@ -245,4 +245,4 @@ class Transaction(models.Model):
         return True
     
     def seller_paid(self):
-        return False
+        return True

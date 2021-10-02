@@ -6,7 +6,7 @@ from csgo.models import Item, InventoryItem, InventoryAddon
 class Inventory:
     steam_inventory_api = "https://steamcommunity.com/inventory/{steamid}/730/2?l=english"
     steam_icon_url = "https://community.akamai.steamstatic.com/economy/image/{icon_url}"
-    float_api = "https://api.csgofloat.com/?url={inspect_url}"
+    float_api = "http://127.0.0.1/?url={inspect_url}"
     clean_fields = ['currency','background_color','type','market_name','name','name_color','tags','appid','market_actions','descriptions','market_tradable_restriction']
 
     def __init__(self,user):
@@ -20,7 +20,7 @@ class Inventory:
     def _is_marketable(item):
         if not item.get('actions',None) or not item.get('marketable',None):
             return False
-        if 'Sticker' in item.get('type'):
+        if item.get('commodity') == 1:
             return False
         return True
     
@@ -80,6 +80,7 @@ class Inventory:
             assets[key]['paintindex'] = item_detail.get('paintindex',0)
             assets[key]['paintseed'] = item_detail.get('paintseed',0)
             assets[key]['float'] = item_detail.get('floatvalue',0)
+            assets[key]['defindex'] = item_detail.get('defindex',0)
 
         self.data = assets
         return assets
@@ -131,12 +132,6 @@ class Inventory:
                     inventory=obj,
                     addon=Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker).first()
                 )
-
-if __name__ == "__main__":
-    from timeit import default_timer as timer
-
-    start = timer()
-    tok = Inventory(76561198323043075)
-    tok.get_data()
-    end = timer()
-    print(end - start)
+        
+        excluded_items = InventoryItem.objects.exclude(assetid__in=[assetids])
+        excluded_items = excluded_items.filter(owner=self.user,item_state__in=[InventoryItem.INV,InventoryItem.LIS])

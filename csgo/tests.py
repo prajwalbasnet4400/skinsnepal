@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from social_django.models import UserSocialAuth
 import requests
+import tempfile
 
 from .api_parsers.steam_inventory import Inventory
 from .models import InventoryItem, Item,Listing, Transaction
@@ -74,9 +75,32 @@ class TradeLogicIntegrationTest(TestCase):
             purpose=Listing.SEL)
         listing.save()
         self.tradelogic = TradeLogic(buyer,seller,listing)
-        self.transaction = Transaction.objects.get(buyer=buyer,listing=listing)
 
     def test_inventoryitem_state(self):
         item = InventoryItem.objects.get(item__market_hash_name='MP7 | Forest DDPAT (Field-Tested)',float=0.3053702414035797,paintseed=409)
         self.assertEqual(item.item_state,InventoryItem.TRA)
         self.assertEqual(item.in_inventory,True)
+
+    def test_trade_flow(self):
+        self.assertTrue(self.tradelogic.buyer_paid())                               #TODO: Currently always returns True, Need to implement payment gateway
+        
+        self.tradelogic.listing.inventory.in_inventory = False
+        self.tradelogic.listing.inventory.save()
+        self.assertTrue(self.tradelogic.trade_sent())
+        
+        self.tradelogic.transaction.trade_sent_screenshot = tempfile.NamedTemporaryFile(suffix=".jpg").name
+        self.tradelogic.transaction.save()
+        self.assertTrue(self.tradelogic.trade_sent_screenshot_exists())
+        
+        item = Item.objects.get(market_hash_name='MP7 | Forest DDPAT (Field-Tested)')
+        InventoryItem.objects.create(owner=self.buyer,item=item,float=0.3053702414035797,paintseed=409,paintindex=5)
+        self.tradelogic.get_inv()
+        self.assertTrue(self.tradelogic.trade_accepted())
+        
+        self.tradelogic.transaction.trade_recv_screenshot = tempfile.NamedTemporaryFile(suffix=".jpg").name
+        self.tradelogic.transaction.save()
+        self.assertTrue(self.tradelogic.trade_accept_screenshot_exists())
+        
+        self.assertTrue(self.tradelogic.seller_paid())
+
+        self.assertTrue(self.tradelogic.transaction_complete())
