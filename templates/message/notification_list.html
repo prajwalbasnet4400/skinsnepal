@@ -1,0 +1,70 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<div class="row text-black">
+    <div class="col">
+        <div class="d-flex w-100">
+            <div class="w-100 bg-light p-1">
+                {% for obj in object_list %}
+                <div class="d-flex flex-row justify-content-between border p-1 {% if obj.read %}{% else %}bg-light{% endif%}" data-bs-toggle="modal" data-bs-target="#notificationModal" data-bs-title="{{obj.title}}" data-bs-date="{{obj.date_created}}" data-bs-content="{{obj.content}}" style="cursor: pointer;">
+                    <div>
+                        <h5>
+                            {{obj.title}}
+                        </h5>
+                        <p class="text-muted ms-3">
+                            {{obj.content|truncatewords:5}}
+                        </p>
+
+                    </div>
+                    <div class="text-right">
+                        <p class="text-muted">
+                            {{obj.date_created}}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+            <p id="title"></p>
+            <p id="date"></p>
+            <p id="content"></p>
+        </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+    var exampleModal = document.getElementById('notificationModal')
+exampleModal.addEventListener('show.bs.modal', function (event) {
+  // Button that triggered the modal
+  var button = event.relatedTarget
+  // Extract info from data-bs-* attributes
+  var content = button.getAttribute('data-bs-content')
+  var title = button.getAttribute('data-bs-title')
+  var date = button.getAttribute('data-bs-date')
+  // If necessary, you could initiate an AJAX request here
+  // and then do the updating in a callback.
+  //
+  // Update the modal's content.
+  var modalTitle = exampleModal.querySelector('.modal-body #title')
+  var modalDate = exampleModal.querySelector('.modal-body #date')
+  var modalContent = exampleModal.querySelector('.modal-body #content')
+
+  modalTitle.innerHTML = title
+  modalDate.innerHTML = date
+  modalContent.innerHTML = content
+})
+
+</script>
+{% endblock js %}

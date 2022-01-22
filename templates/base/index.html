@@ -31,13 +31,13 @@
 <div class="row text-white">
   <div class="col-12">
     <div>
-      <h3>Featured CSGO skins</h3>
-      <div class="d-flex flex-row flex-nowrap item-container" id="item-container">
+      <h3>Recently listed CSGO skins</h3>
+      <div class="d-flex flex-row item-container" id="item-container">
 
         {% for listing in listing_latest %}
-        <div class="item-card" onclick="location.href='{% url 'csgo:detail' pk=listing.pk %}';" style="cursor: pointer;">
+        <div class="item-card" onclick="location.href='{{listing.get_absolute_url}}'" style="cursor: pointer;">
           <div class="item-card-body">
-            <img class="img-fluid img-card" src="{{listing.get_icon}}" alt="">
+            <img class="img-fluid" src="{{listing.get_icon}}" alt="">
             <p class="text-muted mb-0">
               From <span class="text-white text-bold">{{listing.price}}</span>
             </p>
@@ -50,8 +50,6 @@
             </div>
         </div>
         {% endfor %}
-        <div class="item-scroll-overlay " id="slide">
-          <i class="fas fa-angle-right" style="position: absolute;right: 0;bottom: 50%;"></i>
         </div>
       </div>
     </div>
@@ -59,15 +57,3 @@
 </div>
 {% endif %}
 {% endblock content %}
-
-{% block js %}
-<script>
-const button = document.getElementById('slide');
-
-button.onclick = function () {
-  document.getElementById('item-container').scrollLeft += 100;
-};
-
-
-</script>
-{% endblock js %}

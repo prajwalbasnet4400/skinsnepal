@@ -5,7 +5,7 @@ import requests
 import tempfile
 
 from .api_parsers.steam_inventory import Inventory
-from .models import InventoryItem, Item,Listing, Transaction
+from .models import InventoryItem, Item,Listing
 from .logic.trade import TradeLogic
 
 
@@ -49,7 +49,7 @@ class InventoryIntegrationTest(TestCase):
         self.assertTrue(sticker_check.first().addons.all().exists())
 
 
-class TradeLogicIntegrationTest(TestCase):
+class TradeLogicIntegrationTest(TestCase): #TODO: Rewrite this
     def setUp(self):
         Item.get_update()
         user = get_user_model()

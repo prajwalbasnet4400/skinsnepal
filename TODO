@@ -5,6 +5,11 @@ CSGO MARKET API
 - Listing CRUD with pk
 - Addon support
 
+Alphavantage price api:
+    - key: V6XTIM2YFN60I4L7
+    - endpoint: https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=NPR&apikey=V6XTIM2YFN60I4L7
+    - RLimit : 5 per minutes / 200 per day
+    
 // Incomplete
 - CSGO
 
@@ -13,7 +18,7 @@ Inventory Apis:
     - https://steamcommunity.com/profiles/76561198323043075/inventory/json/730/2
 
 Market Price Apis:
-    - https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=<MARKET_HASH_NAME>
+    - https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=StatTrak%E2%84%A2%20M4A1-S%20|%20Hyper%20Beast%20(Minimal%20Wear)
 
 External Apis:
     -Float: $ Host yourself, api limited
@@ -32,13 +37,16 @@ STEAM ITEM PIPELINE:
             - Create listing with all the gathered data
 
 SHOP PAYMENT INGEGRATION PIPELINE:
-    - Seller `LISTS` skin on our platform created as Listing model
+    - Seller `LISTS` skin on our platform created as Listing model  
     - Buyer `BUYS` the skin using esewa payment gateway // Money is delivered to server wallet
     - The Listing is now hidden from the market until the transaction completes
-    - Sever is notified of payment and notifies the `SELLER` to send the trade offer // Seller sends a screenshot for verification
+    - Server is notified of payment and notifies the `SELLER` to send the trade offer // Seller sends a screenshot for verification
     - Server after receiveing the screenshot notifies the `BUYER` to accept the trade offer// Buyer sends a screenshot for verification
     - Then the money is transferred to the `SELLER` after deducting a % as a transaction fee.
     - The `Listing`, `Seller`, `Buyer` and `Payement receipt` are stored in the database permanently 
+
+To Optimize:
+    - Cart query taking 25 ms on each request
 
 Reputation system:
     - Grade the users on platform based on previous sales and transaction
@@ -50,3 +58,5 @@ Trusted seller program:
     - Allows us to verify trade and track items regardless of the unique id change
     - More fine grain control of trade transaction
 
+UI changes:
+    - Add sticker to : http://127.0.0.1:8000/csgo/inventory/create/

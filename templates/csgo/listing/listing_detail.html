@@ -1,0 +1,229 @@
+{% extends 'base/base.html' %} {% block content %}
+{% load static %}
+<style>
+    #float-range {
+        height: 17px;
+        -webkit-appearance: none;
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    #float-range:focus {
+        outline: none;
+    }
+
+    #float-range::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 5px;
+        cursor: pointer;
+        box-shadow: 0px 0px 0px #000000;
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+        border-radius: 1px;
+        border: 0px solid #000000;
+    }
+
+    #float-range::-webkit-slider-thumb {
+        box-shadow: 0px 0px 0px #000000;
+        border: 1px solid #2497E3;
+        height: 10px;
+        width: 5px;
+        border-radius: 50px;
+        background: #FFFFFF;
+        cursor: pointer;
+        -webkit-appearance: none;
+        margin-top: -3px;
+    }
+
+    #float-range:focus::-webkit-slider-runnable-track {
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+    }
+
+    #float-range::-moz-range-track {
+        width: 100%;
+        height: 5px;
+        cursor: pointer;
+        animate: 0.2s;
+        box-shadow: 0px 0px 0px #000000;
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+        border-radius: 1px;
+        border: 0px solid #000000;
+    }
+
+    #float-range::-moz-range-thumb {
+        box-shadow: 0px 0px 0px #000000;
+        border: 1px solid #2497E3;
+        height: 10px;
+        width: 5px;
+        border-radius: 50px;
+        background: #FFFFFF;
+        cursor: pointer;
+    }
+
+    #float-range::-ms-track {
+        width: 100%;
+        height: 5px;
+        cursor: pointer;
+        animate: 0.2s;
+        background: transparent;
+        border-color: transparent;
+        color: transparent;
+    }
+
+    #float-range::-ms-fill-lower {
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+        border: 0px solid #000000;
+        border-radius: 2px;
+        box-shadow: 0px 0px 0px #000000;
+    }
+
+    #float-range::-ms-fill-upper {
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+        border: 0px solid #000000;
+        border-radius: 2px;
+        box-shadow: 0px 0px 0px #000000;
+    }
+
+    #float-range::-ms-thumb {
+        margin-top: 1px;
+        box-shadow: 0px 0px 0px #000000;
+        border: 1px solid #2497E3;
+        height: 10px;
+        width: 5px;
+        border-radius: 50px;
+        background: #FFFFFF;
+        cursor: pointer;
+    }
+
+    #float-range:focus::-ms-fill-lower {
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+    }
+
+    #float-range:focus::-ms-fill-upper {
+        background: rgb(0, 188, 140);
+        background: rgb(0, 188, 140);
+        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="row p-3">
+            <div class="col-12 col-md-8 p-2">
+                <div class="card" style="height: 100%;background-color: #2d2d33;">
+                    <div class="card-block d-flex" style="height: 100%;">
+                        <img src="{{listing.item.get_icon}}" class="img-fluid sticker-fix" alt="Image">
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 p-2">
+                <div class="card" style="height: 100%;background-color: #2d2d33;">
+                    <div class="card-header">
+                        <p>{{listing.item.get_sub_type}} | {{listing.item.exterior}}</p>
+                        <div class="d-flex flex-row justify-content-between">
+                            <h4>{{listing.item.name}}</h4><button class="btn btn-success addtocart" data-pk="{{listing.pk}}"><i class="fas fa-cart-plus"></i> Add to cart</button>
+
+                        </div>
+                        <h2 style="font-weight: bold;color: #00bc8c;">रु {{listing.get_price}}</h2>
+                    </div>
+                    <div class="card-body">
+                        <input type="range" disabled class="form-control" id="float-range"
+                            style="border: none;background: none;" value="{{listing.float}}" min=0 max=1 step="0.001">
+                        <table class="table table-dark table-borderless table-align">
+                            <tbody>
+                                <tr>
+                                    <td><span class="text-muted">Float</span></td>
+                                    <td>{{listing.inventory.float}}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="text-muted">Exterior</span></td>
+                                    <td>{{listing.item.exterior}}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="text-muted">Pattern</span></td>
+                                    <td>{{listing.inventory.paintseed}}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="text-muted">Rarity</span></td>
+                                    <td><span
+                                            style="color: #{{listing.item.rarity_color}};">{{listing.item.rarity}}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" class="text-center"><a href="{{listing.inventory.inspect_url}}" class="btn btn-sm btn-outline-primary">Inspect In-Game</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="row">
+                            {% for addon in listing.addons %}
+                            <div class="col-3">
+                                <img src="{{addon.get_icon_small}}" class="img-fluid" data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom" title="{{addon.market_hash_name}}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>  
+                    <div class="card-footer">
+                        <div class="text-muted p-1">
+                            <p>Minimum prices on:</p>
+                            <table class="table table-align table-dark">
+                                <tbody>
+                                    <tr style="cursor: pointer;" onclick="window.open('{% url "csgo:shop" %}?inventory__item__market_hash_name__icontains={{listing.item.market_hash_name}}&price__lte={{listing.price}}', '_blank').focus();"><td>Khukhuri</td><td>रु <span id="market_price"></span></td></tr>
+                                    <tr style="cursor: pointer;" onclick="window.open('https://steamcommunity.com/market/listings/730/{{listing.item.market_hash_name}}', '_blank').focus();"><td>Steam</td><td>रु <span id="steam_price"></span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block js %}
+<script>
+    $('.addtocart').click(function(event){
+            event.preventDefault();
+            event.target.setAttribute('disabled','true');
+            var item = event.target.getAttribute('data-pk');
+            $.post('{% url 'csgo:cart_add' %}',{'item':item,'csrfmiddlewaretoken':csrftoken},function(data){
+                if (data.success==true){
+                    Notiflix.Notify.Success(data.message);
+                    var cart = $('#cart_count');
+                    var count = cart.text(parseInt(cart.text())+1);
+
+                }else{
+                    Notiflix.Notify.Failure(data.message);
+                }
+            });
+        });
+
+    // External Price
+    $.get('',function(data){
+        steam = $('#steam_price').text(data.steam.lowest_price);
+        market = $('#market_price').text(data.market.price__min);
+    });
+
+    // Tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+
+{% endblock js %}

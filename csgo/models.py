@@ -2,8 +2,9 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.validators import MinValueValidator,MaxValueValidator
+from django.db.models.enums import TextChoices
 from django.urls import reverse   
-import datetime
+import uuid
 
 from .api_parsers.parsers import get_csgo_items
 
@@ -60,6 +61,12 @@ class Item(models.Model):
         url = avatar_url
         icon = url+self.icon_url
         return icon
+    
+    def get_sub_type(self):
+        if self.sub_type:
+            return self.sub_type
+        else:
+            return self.weapon_type
 
     def __str__(self):
         return self.market_hash_name
@@ -80,7 +87,8 @@ class Listing(models.Model):
     inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True,related_name='listed')
     price = models.PositiveBigIntegerField(validators=[MinValueValidator(1)],null=False,blank=False)
     date_listed = models.DateTimeField(auto_now_add=True)
-    purpose = models.CharField(max_length=32,choices=PURPOSE_CHOIES,default="TRADE")
+    purpose = models.CharField(max_length=32,choices=PURPOSE_CHOIES,default="SELL")
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True,null=False)
 
     def state(self):
         return self.inventory.item_state
@@ -97,6 +105,9 @@ class Listing(models.Model):
     def get_icon(self):
         return self.inventory.item.get_icon()
 
+    def get_price(self):
+        return self.price//100
+
     def get_icon_small(self):
         return self.inventory.item.get_icon_small()
 
@@ -107,7 +118,7 @@ class Listing(models.Model):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('csgo:detail', args=[str(self.id)])
+        return reverse('csgo:detail', args=[str(self.unique_id)])
     
     def __str__(self):
         return self.inventory.item.market_hash_name
@@ -125,12 +136,32 @@ class Cart(models.Model):
     def __str__(self):
         return self.owner.username
 
+    def checkout(self):
+        cart_items = self.item.all()
+        for item in cart_items:
+            item.inventory.item_state = InventoryItem.TRA
+            item.inventory.save()
+        self.item.clear()
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart,models.CASCADE)
     listing = models.ForeignKey(Listing,models.CASCADE)
 
+
     def __str__(self):
         return f"{self.cart.owner.username}"
+    
+    def in_transaction(self):
+        if self.listing.state() == InventoryItem.TRA:
+            return True 
+        return False 
+    
+
+    def name(self):
+        return self.listing.inventory.item.market_hash_name
+    
+    def addons(self):
+        return self.listing.inventory.addons
 
 class InventoryAddon(models.Model):
     inventory = models.ForeignKey('InventoryItem',models.CASCADE)
@@ -162,6 +193,7 @@ class InventoryItem(models.Model):
     paintindex = models.CharField(max_length=16,blank=False)
     paintseed = models.CharField(max_length=16,blank=False)
     float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
+    defindex = models.CharField(max_length=16,blank=False)
 
     addons = models.ManyToManyField(Item,blank=True,through='InventoryAddon')
     tradable = models.BooleanField(default=True)
@@ -174,6 +206,12 @@ class InventoryItem(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
 
+    def icon(self):
+        return self.item.get_icon_small()
+
+    def market_hash_name(self):
+        return self.item.market_hash_name
+        
     def __str__(self):
         return self.item.market_hash_name
     
@@ -187,42 +225,21 @@ class InventoryItem(models.Model):
             return False
         return True
 
-class Transaction(models.Model):
-    ESW = "ESEWA"
-    KHT = "KHALTI"
-    BNK = "BANK"
-    
-    PPD = "PAYMENT PENDING"
-    PCM = "PAYMENT COMPLETE"
-    TST = "TRADE SENT"
-    TAC = "TRADE ACCEPTED"
-    FTF = "FUNDS TRANSFERRED"
-    TCM = "TRANSACTION COMPLETE"
+class Transaction(models.Model): #TODO: Rewrite choices to use TextChoices class to clean this mess
 
-    BYE = "BUYER ERROR"
-    SEE = "SELLER ERROR"
-
-    PAYMENT_METHOD_CHOICES = (
-        (ESW,"ESEWA"),
-        (KHT,"KHALTI"),
-        (BNK,"BANK"),
-        )
+    class StateChoices(models.TextChoices):
+        PPD = "1", "PAYMENT PENDING"
+        PCM = "2", "PAYMENT COMPLETE"
+        TST = "3", "TRADE SENT"
+        TAC = "4", "TRADE ACCEPTED"
+        FTF = "5", "FUNDS TRANSFERRED"
+        TCM = "6", "TRANSACTION COMPLETE"
+        BYE = "100", "BUYER ERROR"
+        SEE = "99", "SELLER ERROR"
     
-    STATE_CHOICES = (
-        (PPD,"PAYMENT PENDING"),
-        (PCM,"PAYMENT COMPLETE"),
-        (TST,"TRADE SENT"),
-        (TAC,"TRADE ACCEPTED"),
-        (FTF,"FUNDS TRANSFERRED"),
-        (TCM,"TRANSACTION COMPLETE"),
-        (BYE,"BUYER ERROR"),
-        (SEE,"SELLER ERROR"),
-        )
-    
-    buyer = models.OneToOneField(get_user_model(),on_delete=models.CASCADE)
+    buyer = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
     listing = models.OneToOneField(Listing,on_delete=models.CASCADE,related_name='transaction')
-    payment_method = models.CharField(max_length=64,choices=PAYMENT_METHOD_CHOICES,default=ESW)
-    state = models.CharField(max_length=64,choices=STATE_CHOICES)
+    state = models.CharField(max_length=64,choices=StateChoices.choices,default=StateChoices.PCM)
     
     trade_sent_screenshot = models.ImageField(upload_to='uploads')
     trade_recv_screenshot = models.ImageField(upload_to='uploads')
@@ -230,12 +247,14 @@ class Transaction(models.Model):
     state_last_changed = models.DateTimeField(auto_now=True)
     transaction_started = models.DateTimeField(auto_now_add=True)
 
+    notification_sent = models.BooleanField(default=False)
+
     def save(self,*args, **kwargs):
         if not self.pk:
             inventory = self.listing.inventory
             inventory.item_state = InventoryItem.TRA
             inventory.save()
-
+        self.notification_sent = False
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -246,3 +265,31 @@ class Transaction(models.Model):
     
     def seller_paid(self):
         return True
+
+class WalletTransaction(models.Model):
+    class TypeChoice(models.TextChoices):
+        CR = "CREDIT","CREDIT"
+        DR = "DEBIT","DEBIT"
+
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    amount = models.PositiveIntegerField()
+    type = models.CharField(max_length=32,choices=TypeChoice.choices)
+    date_created = models.DateTimeField(auto_now_add=True)
+    khalti = models.OneToOneField('KhaltiTransaction',on_delete=models.CASCADE,null=True)
+
+    def __str__(self):
+        return f"{self.user}-{self.amount}-{self.type}"
+    
+    def get_amount(self):
+        return self.amount//100
+
+class KhaltiTransaction(models.Model):
+    idx = models.CharField(max_length=128)
+    amount = models.PositiveIntegerField()
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.idx
+        
+    def get_amount(self):
+        return self.amount//100

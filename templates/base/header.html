@@ -1,9 +1,11 @@
+{% load humanize %}
 {% load static %}
 <nav class="navbar navbar-expand-lg text-white">
   <div class="container-fluid">
     <div>
-      <a class="navbar-brand" href="{% url 'csgo:index' %}">
-        <img src="https://media.discordapp.net/attachments/608252322174337055/891256547030753300/afafaged.png" width="200px">
+      <a class="navbar-brand" href="{% url 'index' %}">
+        <img src="https://media.discordapp.net/attachments/608252322174337055/891256547030753300/afafaged.png"
+          width="200px">
       </a>
       <a class="d-inline d-md-none btn btn-sm text-white" data-bs-toggle="offcanvas" href="#offCanvasNav" role="button"
         style="font-size: 1.5rem;" aria-controls="offCanvasNav">
@@ -13,28 +15,40 @@
     <div class="d-none d-md-block text-uppercase me-auto">
       <ul class="nav justify-content-center">
         <li class="nav-item">
-          <a class="nav-link active text-white" aria-current="page" href="{% url 'csgo:trade' %}">Trade</a>
+          <a class="nav-link text-white" href="{% url 'csgo:shop' %}">Buy</a>
         </li>
         <li class="nav-item">
           <a class="nav-link text-white" href="{% url 'csgo:inventory' %}">Sell</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link text-white" href="{% url 'csgo:shop' %}">Shop</a>
+          <a class="nav-link text-white" href="{% url 'csgo:transaction_list' %}">Transactions</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link disabled" href="{% url 'csgo:auction' %}">Auction</a>
+          <a class="nav-link text-white" href="{% url 'csgo:wallet_list' %}">Wallet</a>
         </li>
       </ul>
     </div>
     <div>
-      <button class="btn btn-sm btn-outline-info d-none d-md-inline" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        <i class="fas fa-language"></i> EN | <i class="fas fa-dollar-sign"></i> USD
-      </button>
       {% if user.is_authenticated %}
-      <a class="btn btn-outline-success" href="#"><img src="{{user.profile.avatar}}" class="rounded" width="25px" alt=""> {{user}}</a>
-        {% else %}
-        <a class="btn btn-success" href="{% url 'social:begin' 'steam' %}"><i class="fab fa-steam"></i> Login with
-          steam</a>
+      <div class="btn btn-sm btn-success">
+        <a href="#" class="text-decoration-none text-white fs-6">
+          रु {{user.get_credit|intcomma}}
+        </a>
+      </div>
+      <div class="btn btn-sm btn-success">
+        <a href="{% url 'message:notification' %}" class="position-relative text-white fs-6">
+          <i class="fas fa-bell"></i>
+          <span class="position-absolute top-0 left-0 translate-middle badge rounded-pill bg-danger"
+            id="notification_count" style="display: none;">
+            0
+          </span>
+        </a>
+      </div>
+      <a class="btn btn-outline-success" href="#"><img src="{{user.profile.avatar}}" class="rounded" width="25px"
+          alt=""> {{user}}</a>
+      {% else %}
+      <a class="btn btn-success" href="{% url 'social:begin' 'steam' %}"><i class="fab fa-steam"></i> Login with
+        steam</a>
       {% endif %}
     </div>
   </div>

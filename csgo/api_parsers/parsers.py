@@ -1,4 +1,5 @@
 import requests
+from django.conf import settings
 
 def get_csgo_items():
     item_list=[]
@@ -51,7 +52,7 @@ def get_csgo_items():
                 name = f'{name[-2]} | {name[-1]}'
             else:
                 name = name[-1]
-        
+            
         elif type == 'Gloves':
             sub_type = None
             name = market_hash_name.split('(')
@@ -65,3 +66,22 @@ def get_csgo_items():
                  'rarity':rarity, 'rarity_color':rarity_color,'souvenir':souvenir,'tournament':tournament,'stattrak':stattrak}
         item_list.append(item)
     return item_list
+
+def get_item_price(names:str) -> dict:
+    data = {}
+    for name in names:
+        print(name)
+        params = {
+            'market_hash_name':name,
+            'currency':1,
+            'appid':730
+            }
+        url = f'https://steamcommunity.com/market/priceoverview/'
+        r = requests.get(url,params=params)
+        response = r.json()
+        for v in response:
+            if type(v) == int or type(v) == float:
+                v = v // settings.USD_RATE
+        print(response)
+        data[name] = response
+    return data

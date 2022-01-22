@@ -1,0 +1,162 @@
+{% extends 'base/base.html' %}
+
+<!-- REDO THIS SHIT -->
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12" id="app">
+            {% csrf_token %}
+            <button type="button" class="btn btn-success" @click="create_listing">Create Listing</button>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <th>
+                            Remove
+                        </th>
+                        <th>
+                            Image
+                        </th>
+                        <th>
+                            Item
+                        </th>
+                        <th>
+                            Float
+                        </th>
+                        <th>
+                            Paintseed
+                        </th>
+                        <th>
+                            Buyer pays
+                        </th>
+                        <th>
+                            <button class="btn btn-sm btn-success" @click="get_price()">
+                                Get Price data
+                            </button>
+                        </th>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in items" :key="item.pk">
+                            <td>
+                                <div class="d-flex flex-row">
+                                    <button class="m-auto btn btn-sm btn-outline-danger" @click="remove_item(index)"><i
+                                            class="fas fa-times-circle"></i></button>
+                                </div>
+                            </td>
+                            <td>
+                                <img :src="item.icon" width="128px">
+                            </td>
+                            <td>
+                                ((item.market_hash_name))
+                            </td>
+                            <td>
+                                ((item.float))
+                            </td>
+                            <td>
+                                ((item.paintseed))
+                            </td>
+                            <td>
+                                <input type="number" :name="item.pk" min="0" v-model.number="item.price">
+                            </td>
+                            <td>
+                                <div class="btn btn-sm btn-outline-success">
+                                    K
+                                    ((item.market_price))
+                                </div>
+                                <div class="btn btn-sm btn-outline-success">
+                                    <i class="fab fa-steam"></i>
+                                    ((item.steam_price))
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+    var to_list_url = '{{ to_list_url}}'
+
+    var app = new Vue(
+        {
+            el: '#app',
+            delimiters: ['((', '))'],
+            data: { items: null },
+            mounted: function () {
+                var self = this;
+                $.get(to_list_url, function (data) {
+                    var items = JSON.parse(data);
+                    for (i in items) { items[i].market_price = null; items[i].steam_price = null };
+                    self.items = items
+                })
+            },
+            methods: {
+                get_price: function () {
+                    var self = this;
+                    var params = '?'
+
+                    if (this.price_fetched == true) {
+                        Notiflix.Notify.Info("Already fetched price");
+                        return false;}
+                    this.price_fetched = true;
+                    for (var i in this.items) {
+                        params = params + `names=${this.items[i].market_hash_name}&`
+                    }
+                    $.get(`/csgo/get_item_prices/${params}`, function (data) {
+                        self.items[i].steam_price = data.steam.lowest_price;
+                        self.items[i].market_price = data.market.price__min;
+                    });
+                    Notiflix.Notify.Success("Fetched items' price");
+
+                }
+                ,
+                remove_item: function (index) {
+                    Notiflix.Notify.Info(`${this.items[index].market_hash_name} removed!`);
+                    this.items.splice(index, 1);
+                }
+                ,
+                create_listing: function (e) {
+                    e.disabled = true;
+                    var self = this;
+                    $('#app input').each(function (i, elm) {
+                        if (parseInt(elm.value) <= 0 | elm.value == "") {
+                            Notiflix.Notify.Failure("Please enter valid prices for all items");
+                            self.form_correct = false;
+                            return false;
+                        };
+                        self.form_correct = true;
+                    });
+                    if (self.listed != true && self.form_correct == true) {
+                        self.listed = true;
+                        var data = JSON.stringify({ 'items': this.items });
+                        var success = function () {
+                            window.location = '{% url "csgo:shop" %}'
+                        };
+                        $.ajax({
+                            type: "POST",
+                            url: '',
+                            data: data,
+                            statusCode: {
+                                200: success
+                            },
+                            dataType: 'json',
+                            headers: { 'X-CSRFToken': csrftoken }
+                        });
+                    }else if(this.listed != true && this.form_correct == true){
+                        Notiflix.Notify.Info('Processing request, Please wait')
+                        
+                    };
+                }
+
+            }
+        }
+    )
+
+</script>
+{% endblock js %}

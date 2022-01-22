@@ -2,20 +2,39 @@ import requests
 from django.utils.html import strip_tags
 from csgo.models import Item, InventoryItem, InventoryAddon
 
+from django.conf import settings
 
 class Inventory:
     steam_inventory_api = "https://steamcommunity.com/inventory/{steamid}/730/2?l=english"
     steam_icon_url = "https://community.akamai.steamstatic.com/economy/image/{icon_url}"
-    float_api = "http://127.0.0.1/?url={inspect_url}"
+    float_api = settings.FLOAT_API
     clean_fields = ['currency','background_color','type','market_name','name','name_color','tags','appid','market_actions','descriptions','market_tradable_restriction']
 
     def __init__(self,user):
         self.user = user
         self.steamid = user.steamid()
-        self.inventory = self.steam_inventory_api.format(steamid=self.steamid)
-        self.inventory = requests.get(self.inventory).json()
-        self.data = None
-    
+        inv_url = self.steam_inventory_api.format(steamid=self.steamid)
+        self.inventory = requests.get(inv_url).json()
+
+    def check_item_exists(self,market_hash_name,defindex,float,paintindex,paintseed):
+        if self.inventory.get('total_inventory_count') == 0:
+            return False
+        assets = {f"{mydict['assetid']}":mydict for mydict in self.inventory["assets"]}
+        descriptions = {f"{mydict['classid']}":mydict for mydict in self.inventory["descriptions"]}
+        items = []
+        for key, val in assets.copy().items():
+            if descriptions[val['classid']]['market_hash_name'] != market_hash_name:
+                assets.pop(key)
+            else:
+                print(assets[key])
+                assets[key].update(descriptions[val['classid']])
+                items.append(self._format_inspect_url(assets[key]))
+        for item in items:
+            data = self._get_item_detail(item)
+            if data.get('defindex') == defindex and data.get('float') == float and data.get('paintindex') == paintindex and data.get('paintseed') == paintseed:
+                return True
+        return False        
+
     @staticmethod
     def _is_marketable(item):
         if not item.get('actions',None) or not item.get('marketable',None):
@@ -39,6 +58,7 @@ class Inventory:
             return None
         url = url[0]['link']
         item['inspect_url'] = url.replace(f"%owner_steamid%", steamid).replace(f"%assetid%", assetid)
+        return url.replace(f"%owner_steamid%", steamid).replace(f"%assetid%", assetid)
 
     def _format_icon(self,item):
         icon = item.get('icon_url')
@@ -59,58 +79,43 @@ class Inventory:
         item['stickers'] = sticker
         
 
-    def get_data(self):
-        if not self.inventory.get('assets',None):
+    def update_inventory(self):
+        objs = []
+        try:
+            self.inventory.get('assets',None)
+        except:
             self.data = {}
             return {}
+
         assets = {f"{mydict['assetid']}":mydict for mydict in self.inventory["assets"]}
         descriptions = {f"{mydict['classid']}":mydict for mydict in self.inventory["descriptions"]}
 
+        existing_inventory = {item.assetid:item for item in InventoryItem.objects.filter(owner=self.user)}
+        item_names = {name['market_hash_name'] for name in descriptions.values()}
+        item_query =  Item.objects.in_bulk(item_names,field_name='market_hash_name')
+
         for key,val in assets.copy().items():
+            if existing_inventory.get(key,None):
+                continue
+
             assets[key].update(descriptions[val['classid']])
 
             if not self._is_marketable(assets[key]):
-                assets.pop(key)
                 continue
 
-            self._format_inspect_url(assets[key])
+            url = self._format_inspect_url(assets[key])
             self._format_icon(assets[key])
             self._format_sticker(assets[key])
-            item_detail =self._get_item_detail(assets[key].get('inspect_url'))
+            item_detail =self._get_item_detail(url)      #TODO: GET sticker info and add it to sticker objs
             assets[key]['paintindex'] = item_detail.get('paintindex',0)
             assets[key]['paintseed'] = item_detail.get('paintseed',0)
             assets[key]['float'] = item_detail.get('floatvalue',0)
             assets[key]['defindex'] = item_detail.get('defindex',0)
-
-        self.data = assets
-        return assets
-
-    def update_inventory(self):
-        if not self.data:
-            self.get_data()
-        data = self.data
-        objs = []
-        assetids = []
-        names = set()
-        sticker_names = set()
-
-        for item in data.values():
-            assetids.append(item['assetid'])
-            names.add(item['market_hash_name'])
-            for sticker in item.get('stickers',[]):
-                sticker_names.add(sticker)
-
-        existing_items = Item.objects.in_bulk(names,field_name='market_hash_name')
-        existing_inv = InventoryItem.objects.filter(assetid__in=assetids).values_list('assetid',flat=True)
-
-        for item in data.values():
-            if not item.get('market_hash_name') in existing_items.keys():
-                continue
-            if item.get('assetid') in existing_inv:
-                continue
+            
+            item = assets[key]
             inv =InventoryItem(
                 owner=self.user,
-                item=existing_items.get(item['market_hash_name']),
+                item=item_query.get(item['market_hash_name']),
                 classid=item['classid'],
                 instanceid=item['instanceid'],
                 assetid=item['assetid'],
@@ -118,20 +123,97 @@ class Inventory:
                 inspect_url=item['inspect_url'],
                 float=item['float'],
                 paintindex=item['paintindex'],
-                paintseed=item['paintseed']
+                paintseed=item['paintseed'],
+                defindex=item['defindex']
                 )
             objs.append(inv)
         objs = InventoryItem.objects.bulk_create(objs)
 
-        for obj in objs:                                # Stickers m2m field logic
-            data_stickers = data[obj.assetid]
+        for obj in objs:
+            data_stickers = assets[obj.assetid]
             for sticker in data_stickers.get('stickers',[]):
-                if sticker not in sticker_names:
+                sticker = Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker)
+                if not sticker.exists():
                     continue
                 InventoryAddon.objects.create(
                     inventory=obj,
-                    addon=Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker).first()
+                    addon= sticker.first()
                 )
-        
-        excluded_items = InventoryItem.objects.exclude(assetid__in=[assetids])
-        excluded_items = excluded_items.filter(owner=self.user,item_state__in=[InventoryItem.INV,InventoryItem.LIS])
+        # Delete non existing items in inventory in db // If its sold dont delete it from db
+        excluded_items = InventoryItem.objects.filter(owner=self.user)
+        excluded_items = excluded_items.exclude(assetid__in=[int(key) for key in assets.keys()])
+        excluded_items.update(in_inventory=False)
+        excluded_items = excluded_items.filter(item_state__in=[InventoryItem.LIS,InventoryItem.INV])
+        excluded_items.delete()
+
+class SteamTrade:
+    """
+        Package to check and verify steam trades from seller's end using seller's steam api key
+    """
+    GET_TRADE_OFFERS_URL = 'https://api.steampowered.com/IEconService/GetTradeOffers/v1/'
+    GET_TRADE_OFFER_URL = 'https://api.steampowered.com/IEconService/GetTradeOffer/v1/'
+    GET_TRADE_STATUS = 'https://api.steampowered.com/IEconService/GetTradeStatus/v1/'
+
+    def __init__(self,api_key):
+        self.get_trade_offers_pld = {'get_received_offers':'true','key':api_key}
+        self.get_trade_offer_pld = {'key':api_key}
+        self.get_trade_status_pld = {'key':api_key}
+        self.api_key = api_key
+    
+    def check_trade_received(self,assetid,classid,instanceid)->dict:
+        r = requests.get(self.GET_TRADE_OFFERS_URL,params=self.get_trade_offers_pld)
+        resp = r.json()
+        response = resp.get('response')
+
+        if not response:
+            return {'success':False} #TODO: Convert to raise exception
+        trade_recv= response.get('trade_offers_received')
+        if not trade_recv:
+            return {'success':False} #TODO: Same as above
+        for trade in trade_recv:
+            items_to_receive = trade.get('items_to_receive')
+            if not items_to_receive:
+                continue
+            elif len(items_to_receive) > 1:
+                continue
+            item = items_to_receive[0]
+            if item.get('assetid') == assetid and item.get('classid') == classid and item.get('instanceid') == instanceid:
+                return {'success':True,'tradeofferid':trade.get('tradeofferid')}
+        return {'success':False}
+    
+    def check_trade_accepted(self,assetid,classid,instanceid,tradeofferid)->dict:
+        get_trade_offer_pld = self.get_trade_offer_pld
+        get_trade_offer_pld['tradeofferid'] = tradeofferid
+        r = requests.get(self.GET_TRADE_OFFER_URL,params=get_trade_offer_pld)
+        resp = r.json()
+
+        response = resp.get('response')
+        if not response:
+            return {'success':False} #TODO: Same as above
+        offer = response.get('offer')
+        if not offer:
+            return {'success':False} #TODO: Same as above
+        items_to_receive = offer.get('items_to_receive')
+        if len(items_to_receive) > 1:
+            return {'success':False} #TODO: Same as above
+        item = items_to_receive[0]
+        if item.get('assetid') == assetid and item.get('classid') == classid and item.get('instanceid') == instanceid:
+            if offer.get('trade_offer_state') == 3:
+                return {'success':True,'tradeid':offer.get('tradeid')}
+            else:
+                return {'success':False,'tradeid':offer.get('tradeid'),'trade_offer_state':offer.get('trade_offer_state')}
+    
+    def check_trade_status(self,tradeid):
+        get_trade_status_pld = self.get_trade_status_pld
+        get_trade_status_pld['tradeid'] = tradeid
+        r = requests.get(self.GET_TRADE_STATUS,params=get_trade_status_pld)
+        resp = r.json()
+        response = resp.get('response')
+        if not response:
+            return {'success':False} #TODO: Same as above
+        trades = response.get('trades')
+        if not trades:
+            return {'success':False} #TODO: Same as above
+        trade = trades[0]
+        data = {'success':True,'status':trade.get('status'),'items':trade.get('assets_received')}
+        return data

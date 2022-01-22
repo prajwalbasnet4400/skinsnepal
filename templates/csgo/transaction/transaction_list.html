@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %} {% load crispy_forms_tags %} {% block content %}
+<div class="container text-white">
+    <div class="row">
+
+        <div class="col">
+            <form method="get">
+                {{ filter.form.as_p }}
+                <input type="submit" />
+            </form>
+            <table class="table table-hover table-dark">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ITEM</th>
+                        <th>STATUS</th>
+                        <th>STATUS LAST CHANGED</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in filter.qs %}
+                    <tr>
+                        <td>{{txn.pk}}</td>
+                        <td>
+                            <a style="text-decoration: none;" href="{% url 'csgo:detail' uuid=txn.listing.unique_id %}">
+                                {{txn.listing.inventory.market_hash_name}}
+                            </a>
+                        </td>
+                        <td>{{txn.get_state_display }}</td>
+                        <td>{{txn.state_last_changed}}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-exclamation"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

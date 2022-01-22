@@ -17,6 +17,9 @@
     --cash-black:#484848;
     --my-primary:#ee4f54;
 }
+.text-cash-green{
+    color: var(--cash-green);
+}
 
 
 body{
@@ -56,7 +59,8 @@ h1{
 
 .item-card{
     margin-right: 1px;
-    width: 25%;
+    min-width: 200px;
+    max-width: 25%;
     display: flex;
     flex-direction: column;
     
@@ -78,10 +82,6 @@ h1{
 }
 .item-card:hover .item-card-footer{
     visibility: visible;
-}
-
-.item-card img{
-    min-width: 200px;
 }
 
 .item-scroll-overlay{
@@ -116,7 +116,6 @@ display: none;
 }
 
 .navbar-bg{
-
     background: #232526;  /* fallback for old browsers */
     background: -webkit-linear-gradient(to right, #414345, #232526);  /* Chrome 10-25, Safari 5.1-6 */
     background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
@@ -124,7 +123,7 @@ display: none;
 
 
 .table-align td:nth-child(odd) {
-    font-weight: bold;
+    /* font-weight: bold; */
 }
 .table-align td:nth-child(even) {
     text-align: right;
@@ -142,7 +141,7 @@ display: none;
     font-size: 90%;
 }
 
-.card .card-badge {
+.card .card-badge-right{
     position: absolute;
     top: 0;
     right: 0;
@@ -158,18 +157,6 @@ display: none;
     box-shadow: 0 1px 20px 0 rgba(69, 90, 100, 0.08);
 }
 
-.img-hover-zoom {
-    overflow: hidden;
-}
-
-.img-hover-zoom img {
-    transition: transform .5s ease;
-}
-
-.img-hover-zoom:hover img {
-    transform: scale(1.1);
-}
-
 .card-thumbnail {
     background: #dbdbdb;
 }
@@ -183,18 +170,6 @@ display: none;
 .img-hover-text:hover~.img-hover {
     display: inherit;
 }
-
-.tooltip-inner {
-    background-color: rgb(255, 255, 255) !important;
-    color: rgb(0, 0, 0);
+.greyscale{
+    filter: grayscale(100%);
 }
-
-/* .check-item:checked{
-    position:absolute;
-    right:0;
-    width:100%;
-    height:100%;
-    appearance: none;
-    background-color: rgba(240, 128, 128, 0.301);
-    z-index: 1;
-} */

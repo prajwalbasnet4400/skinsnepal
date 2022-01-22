@@ -10,7 +10,7 @@ class InventoryCreateForm(forms.ModelForm):
 
     class Meta:
         model = models.Listing
-        fields = ('price','inventory','purpose')
+        fields = ('price','inventory')
         widgets = {
                     'tradable':forms.HiddenInput(),
                     'inventory':forms.HiddenInput()}

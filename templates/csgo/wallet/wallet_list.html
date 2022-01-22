@@ -1,0 +1,76 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<div class="container text-white">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex justify-content-evenly">
+                <button id="add-funds" class="btn btn-success" data-pk="ADD-FUNDS" data-name="ADD-FUNDS" data-url="https://test.com" data-price="10000">Add funds</button>
+                <button id="withdraw-funds" class="btn btn-success">Withdraw funds</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            {% for txn in txns %}
+            {{txn.user}}
+            {{txn.get_amount}}
+            {{txn.type}}
+            {{txn.date_created}}------
+            {{txn.khalti.idx}}
+            {{txn.khalti.get_amount}}
+            {{txn.khalti.date_created}}
+            <hr>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+
+{% block js %}
+<script>
+    $('#add-funds').click(function (element) {
+        var e = element.currentTarget;
+        var config = {
+            "publicKey": "test_public_key_58adebc2ceaa46c1be2c3a9c6509ea26",
+            "productIdentity": e.getAttribute('data-pk'),
+            "productName": e.getAttribute('data-name'),
+            "productUrl": e.getAttribute('data-url'),
+            "paymentPreference": [
+                "KHALTI",
+                "EBANKING",
+                "MOBILE_BANKING",
+                "CONNECT_IPS",
+                "SCT",
+            ],
+            "eventHandler": {
+                onSuccess(payload) {
+                    payload.type = "add_funds";
+                    $.ajax(
+                            {
+                                url: "",
+                                method: 'POST',
+                                data: payload,
+                                headers: { 'X-CSRFToken': csrftoken },
+                                success: function () {
+                                    Notiflix.Notify.Info(`Funds added`);
+                                }
+                            }
+                        );
+                },
+                onError(error) {
+                    console.log(error);
+                },
+                onClose() {
+                    console.log('widget is closing');
+                }
+            }
+        };
+        var checkout = new KhaltiCheckout(config);
+        var amount =  e.getAttribute('data-price');
+        checkout.show({ amount: amount });
+    });
+</script>
+</script>
+{% endblock js %}

@@ -7,13 +7,13 @@ dotenv.load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+INVENTORY_ITEM = 'https://steamcommunity.com/id/theonionknight4400/inventory/#730_2_{assetid}'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
-
+FLOAT_API = "https://api.csgofloat.com/?url={inspect_url}"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
 
     'debug_toolbar',
     'social_django',
@@ -38,14 +39,16 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'crispy_forms',
     'django_filters',
+    'django_q',
 
     'user',
     'csgo',
+    'message'
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
 INTERNAL_IPS = [
@@ -95,12 +98,27 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'steam',
-        'HOST': '192.168.1.100',
+        'HOST': '127.0.0.1',
         'PORT': 5432,
         'USER': 'postgres',
         'PASSWORD': 'mysecretpassword'
 
     }
+}
+Q_CLUSTER = {
+    'name': 'steam',
+    'workers': 3,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 3,
+    'label': 'Django Q',
+    'redis': {
+        'host': '192.168.1.100',
+        'port': 6379,
+        'db': 0, }
 }
 
 
@@ -208,7 +226,7 @@ SOCIAL_AUTH_STEAM_PIPELINE = (
 
 
 
-DEFAULT_FROM_EMAIL = 'devendra.basnet.asdf@gmail.com'
+DEFAULT_FROM_EMAIL = 'TheOnionKnight@academygaming.org'
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
@@ -216,3 +234,17 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+USD_RATE = 100
+
+KHALTI_PUBLIC_KEY = os.environ.get('KHALTI_PUBLIC_KEY')
+KHALTI_SECRET_KEY = os.environ.get('KHALTI_SECRET_KEY')
+
+STEAM_API_KEY = os.environ.get('STEAM_API_KEY')
+
+KHALTI_VERIFICATION_URL = 'https://khalti.com/api/v2/payment/verify/'
+KHALTI_LIST_URL = 'https://khalti.com/api/v2/merchant-transaction/'
+KHALTI_DETAIL_URL = 'https://khalti.com/api/v2/merchant-transaction/<idx>/'
+KHALTI_STATUS_URL = 'https://khalti.com/api/v2/payment/status/'
+
+LOGIN_REDIRECT_URL = ''
+LOGIN_URL = '/auth/social/login/steam/'
