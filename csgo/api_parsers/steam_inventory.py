@@ -1,6 +1,6 @@
 import requests
 from django.utils.html import strip_tags
-from csgo.models import Item, InventoryItem, InventoryAddon
+from csgo.models import Item, InventoryItem,Addon
 
 from django.conf import settings
 
@@ -135,15 +135,13 @@ class Inventory:
                 sticker = Item.objects.filter(type='Sticker',market_hash_name__icontains=sticker)
                 if not sticker.exists():
                     continue
-                InventoryAddon.objects.create(
-                    inventory=obj,
-                    addon= sticker.first()
-                )
+                addon= sticker.first()
+                Addon.objects.create(item=addon,inventory=obj)
         # Delete non existing items in inventory in db // If its sold dont delete it from db
         excluded_items = InventoryItem.objects.filter(owner=self.user)
         excluded_items = excluded_items.exclude(assetid__in=[int(key) for key in assets.keys()])
         excluded_items.update(in_inventory=False)
-        excluded_items = excluded_items.filter(item_state__in=[InventoryItem.LIS,InventoryItem.INV])
+        excluded_items = excluded_items.filter(item_state__in=[InventoryItem.ItemStateChoices.LIS,InventoryItem.ItemStateChoices.INV])
         excluded_items.delete()
 
 class SteamTrade:

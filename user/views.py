@@ -1,48 +1,37 @@
-from django.contrib.auth.views import (LoginView,LogoutView,PasswordChangeView,
-                                        PasswordChangeDoneView,PasswordResetView,PasswordResetConfirmView,
-                                        PasswordResetDoneView,PasswordResetCompleteView)
-from django.shortcuts import redirect, render
-from django.views.generic.base import View
-from django.views.generic.edit import FormView
-from .forms import RegisterForm
-class Login(LoginView):
-    pass
+from django.http import JsonResponse
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from api.permissions import IsOwnerOrReadOnly
 
-class Logout(LogoutView):
-    pass
-class PasswordChange(PasswordChangeView):
-    pass
 
-class PasswordChangeDone(PasswordChangeDoneView):
-    pass
+from .serializers import UserSerializer
+from .steam_auth import auth,get_uid,associate_user
 
-class PasswordReset(PasswordResetView):
-    pass
+USER_MODEL = get_user_model()
 
-class PasswordResetConfirm(PasswordResetConfirmView):
-    pass
+def steam_login(request):
+    return auth()
 
-class PasswordResetDone(PasswordResetDoneView):
-    pass
+def steam_callback(request):
+    uid = get_uid(request.GET)
+    data =  {'token':None}
+    if not uid:
+        return JsonResponse(data,status=400)
+    else:
+        user = associate_user(uid)
+        data['token'] = user.get_token()
+    return JsonResponse(data)
 
-class PasswordResetComplete(PasswordResetCompleteView):
-    pass
+class UserViewSet(ReadOnlyModelViewSet):
+    queryset = USER_MODEL.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated,IsOwnerOrReadOnly ]
 
-class Signup(View):
-    template_name = 'registration/signup.html'
-    form_class = RegisterForm
-    success_url = '/'
-
-    def get(self,request,*args, **kwargs):
-        ctx = {}
-        ctx['form'] = self.form_class()
-        return render(request,self.template_name,ctx)
-    
-    def post(self,request,*args, **kwargs):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            form.save()
-        else:
-            print('invalid form')
-        
-        return redirect('signup')
+    @action(detail=False,methods=['GET'],permission_classes=[IsAuthenticated,IsOwnerOrReadOnly])
+    def my_user(self,request):
+        user = request.user
+        serilizer = UserSerializer(user)
+        return Response(serilizer.data)

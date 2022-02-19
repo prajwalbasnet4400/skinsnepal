@@ -8,31 +8,28 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 
 from django.urls import reverse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
 from csgo.api_parsers.steam_inventory import Inventory
 from csgo.api_parsers.parsers import get_item_price
+from django.conf import settings
 
 from . import serializers
 from . import models
 from . import filters
 from .logic import khalti
 
-class IndexView(TemplateView):
-    template_name = 'base/index.html'
-    csgo_queryset = models.Listing.objects.filter(inventory__item_state=models.InventoryItem.LIS).order_by(
-                                                'date_listed').select_related('inventory','inventory__item')[:8]
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['listing_latest'] = self.csgo_queryset
-        return context
+def index(request,*args, **kwargs):
+    template_name = settings.BASE_DIR.joinpath('templates','base','index.html')
+    with open(template_name,'r') as template: 
+        return HttpResponse(template)
     
+
 class ListingBuyView(TemplateView):                                 # TODO: Pagination
     template_name = 'csgo/listing/listing_shop.html'
     paginate_by = 50
     queryset = models.Listing.objects.select_related('inventory','inventory__item').prefetch_related('inventory__addons').filter(
-                                                                    purpose="SELL",inventory__item_state=models.InventoryItem.LIS)
+                                                                    purpose="SELL",inventory__item_state=models.InventoryItem.ItemStateChoices.LIS)
 
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)

@@ -2,9 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.validators import MinValueValidator,MaxValueValidator
-from django.db.models.enums import TextChoices
 from django.urls import reverse   
-import uuid
 
 from .api_parsers.parsers import get_csgo_items
 
@@ -13,18 +11,14 @@ avatar_url = settings.STEAM_AVATAR_URL
 class Item(models.Model):
     name = models.CharField(max_length=256)
     market_hash_name = models.CharField(unique=True,blank=False,null=False,max_length=255)
-
     icon_url = models.TextField(blank=True,null=True)
     icon_url_large = models.TextField(blank=True,null=True)
-    
     type = models.CharField(max_length=64)
     sub_type = models.CharField(max_length=64,blank=True,null=True)
     weapon_type = models.CharField(max_length=64, blank=True,null=True)
-    
     exterior = models.CharField(max_length=64, blank=True,null=True)
     rarity = models.CharField(max_length=64, blank=True,null=True)
     rarity_color = models.CharField(max_length=64, blank=True,null=True)
-    
     stattrak = models.BooleanField(null=True)
     souvenir = models.BooleanField(null=True)
     tournament = models.CharField(max_length=255,blank=True,null=True)
@@ -57,11 +51,6 @@ class Item(models.Model):
             icon = url+self.icon_url
         return icon
     
-    def get_icon_small(self):
-        url = avatar_url
-        icon = url+self.icon_url
-        return icon
-    
     def get_sub_type(self):
         if self.sub_type:
             return self.sub_type
@@ -73,160 +62,121 @@ class Item(models.Model):
     
 
 class Listing(models.Model):
-    TRA = "TRADE"
-    SEL = "SELL"
-    AUC = "AUCTION"
-
-    PURPOSE_CHOIES = (
-        (TRA,"TRADE"),
-        (SEL,"SELL"),
-        (AUC,"AUCTION"))
-
+    class PurposeChoices(models.TextChoices):
+        TRA = "TRADE", "TRADE"
+        SEL = "SELL", "SELL"
+        AUC = "AUCTION", "AUCTION"
 
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,null=False)
     inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True,related_name='listed')
     price = models.PositiveBigIntegerField(validators=[MinValueValidator(1)],null=False,blank=False)
+    purpose = models.CharField(max_length=32,choices=PurposeChoices.choices,default=PurposeChoices.SEL)
     date_listed = models.DateTimeField(auto_now_add=True)
-    purpose = models.CharField(max_length=32,choices=PURPOSE_CHOIES,default="SELL")
-    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True,null=False)
 
-    def state(self):
-        return self.inventory.item_state
+    def item(self):
+        return self.inventory.item
 
     def float(self):
         return self.inventory.float
 
+    def icon(self):
+        return self.inventory.item.get_icon()
+    
+    def exterior(self):
+        return self.inventory.item.exterior
+
+    def rarity(self):
+        return self.inventory.item.rarity
+
+    def rarity_color(self):
+        return self.inventory.item.rarity_color
+
+    def stattrak(self):
+        return self.inventory.item.stattrak
+
+    def inspect_url(self):
+        return self.inventory.inspect_url
+
+    def name(self):
+        return self.inventory.item.name
+
     def addons(self):
         return self.inventory.addons.all()
-    
-    def item(self):
-        return self.inventory.item
 
-    def get_icon(self):
-        return self.inventory.item.get_icon()
+    def type(self):
+        return self.inventory.item.get_sub_type()
 
-    def get_price(self):
-        return self.price//100
-
-    def get_icon_small(self):
-        return self.inventory.item.get_icon_small()
-
-    def delete(self,*args, **kwargs):
-        if self.inventory:
-            self.inventory.item_state = InventoryItem.INV
-            self.inventory.save()
-        super().delete(*args, **kwargs)
+    def save(self,*args, **kwargs):
+        if not self.pk:
+            inv = self.inventory
+            inv.item_state=InventoryItem.ItemStateChoices.LIS
+            inv.save()
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('csgo:detail', args=[str(self.unique_id)])
+        return reverse('api:listing-detail', args=[str(self.pk)])
     
     def __str__(self):
         return self.inventory.item.market_hash_name
 
-    def in_cart(self,user):
-        return user.cart.item.filter(pk=self.pk).exists()
-    
-
-class Cart(models.Model):
-    owner = models.OneToOneField(get_user_model(),on_delete=models.CASCADE,related_name='cart')
-    item = models.ManyToManyField(Listing,related_name='cart_items',through='CartItem')
-    
-    def total_items(self):
-        return self.item.all().count()
-    def __str__(self):
-        return self.owner.username
-
-    def checkout(self):
-        cart_items = self.item.all()
-        for item in cart_items:
-            item.inventory.item_state = InventoryItem.TRA
-            item.inventory.save()
-        self.item.clear()
-
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart,models.CASCADE)
-    listing = models.ForeignKey(Listing,models.CASCADE)
+    owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing,on_delete=models.CASCADE)
 
-
-    def __str__(self):
-        return f"{self.cart.owner.username}"
-    
-    def in_transaction(self):
-        if self.listing.state() == InventoryItem.TRA:
-            return True 
-        return False 
-    
-
-    def name(self):
-        return self.listing.inventory.item.market_hash_name
-    
-    def addons(self):
-        return self.listing.inventory.addons
-
-class InventoryAddon(models.Model):
-    inventory = models.ForeignKey('InventoryItem',models.CASCADE)
-    addon = models.ForeignKey(Item,models.CASCADE)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['owner','listing'],name='unique cartitem')]
 
     def __str__(self):
-        return f"{self.addon.name}"
-
+        return f"{self.owner.username}"
 
 class InventoryItem(models.Model):
-    INV = "INVENTORY"
-    LIS = "LISTED"
-    TRA = "TRANSACTION"
-    SOL = "SOLD"
-
-    ITEM_STATE_CHOICES = (
-        (INV,"INVENTORY"),
-        (LIS,"LISTED"),
-        (TRA,"TRANSACTION"),
-        (SOL,"SOLD"),)
+    class ItemStateChoices(models.TextChoices):
+        INV = "INVENTORY", "INVENTORY"
+        LIS = "LISTED", "LISTED"
+        TRA = "TRANSACTION", "LISTED"
+        SOL = "SOLD", "LISTED"
 
     owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE,related_name='inventory') 
     item = models.ForeignKey(Item,on_delete=models.CASCADE,related_name='_inventory')
-
     classid = models.CharField(max_length=128)
     instanceid = models.CharField(max_length=128)
     assetid = models.CharField(max_length=128)
-
     paintindex = models.CharField(max_length=16,blank=False)
     paintseed = models.CharField(max_length=16,blank=False)
-    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
     defindex = models.CharField(max_length=16,blank=False)
-
-    addons = models.ManyToManyField(Item,blank=True,through='InventoryAddon')
-    tradable = models.BooleanField(default=True)
+    item_state = models.CharField(max_length=32,choices=ItemStateChoices.choices,default=ItemStateChoices.INV)
     inspect_url = models.TextField()
-
-    item_state = models.CharField(max_length=32,choices=ITEM_STATE_CHOICES,default="INVENTORY")
-    last_updated = models.DateTimeField(auto_now=True)
+    float = models.FloatField(validators=[MinValueValidator(0),MaxValueValidator(1)],null=True)
+    tradable = models.BooleanField(default=True)
     in_inventory = models.BooleanField(default=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['assetid','owner'],name='unique_item')]
 
+    def get_addons(self):
+        return self.addons.all()
+
     def icon(self):
-        return self.item.get_icon_small()
+        return self.item.get_icon()
 
     def market_hash_name(self):
         return self.item.market_hash_name
         
     def __str__(self):
         return self.item.market_hash_name
-    
-    def is_listed(self):
-        if not self.item_state == self.LIS:
-            return False
-        return True
 
-    def is_sold(self):
-        if not self.item_state == self.SOL:
-            return False
-        return True
+class Addon(models.Model):
+    item = models.ForeignKey(Item,on_delete=models.PROTECT)
+    inventory = models.ForeignKey(InventoryItem,on_delete=models.CASCADE,related_name='addons')
+
+    def name(self):
+        return self.item.name
+    def icon(self):
+        return self.item.get_icon()
+
 
 class Transaction(models.Model): #TODO: Rewrite choices to use TextChoices class to clean this mess
-
     class StateChoices(models.TextChoices):
         PPD = "1", "PAYMENT PENDING"
         PCM = "2", "PAYMENT COMPLETE"
@@ -238,7 +188,7 @@ class Transaction(models.Model): #TODO: Rewrite choices to use TextChoices class
         SEE = "99", "SELLER ERROR"
     
     buyer = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
-    listing = models.OneToOneField(Listing,on_delete=models.CASCADE,related_name='transaction')
+    listing = models.OneToOneField(Listing,on_delete=models.PROTECT,related_name='transaction')
     state = models.CharField(max_length=64,choices=StateChoices.choices,default=StateChoices.PCM)
     
     trade_sent_screenshot = models.ImageField(upload_to='uploads')
@@ -271,7 +221,7 @@ class WalletTransaction(models.Model):
         CR = "CREDIT","CREDIT"
         DR = "DEBIT","DEBIT"
 
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
     type = models.CharField(max_length=32,choices=TypeChoice.choices)
     date_created = models.DateTimeField(auto_now_add=True)

@@ -1,0 +1,47 @@
+:root{
+    --cash-green:#00bc8c;
+    --cash-black:#484848;
+    --my-primary:#ee4f54;
+    --bg-color:#222227;
+}
+
+body{
+    background-color: var(--bg-color);
+    color: white;
+}
+
+.btn-primary{
+    color: white;
+    background-color: var(--my-primary);
+    border: none;
+}
+
+.btn-primary:hover,.btn-primary:focus,.btn-primary:focus-visible,.btn-primary:active{
+    color: white;
+    background-color: var(--my-primary);
+    transition: 100ms;
+    box-shadow: #ee4f5488 0px 0px 10px;
+    outline: 0;
+    border: none;
+}
+
+.navbar .nav-link{
+    color: white;
+}
+
+.navbar{
+    font-size: 0.92rem;
+}
+
+.item-card{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color: #36363c;
+}
+
+.item-card:hover{
+    background-color: #525259;
+    transition: 100ms;
+}

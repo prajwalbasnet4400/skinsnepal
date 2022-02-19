@@ -1,59 +1,110 @@
-{% extends 'base/base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html>
 
-{% block content %}
-<div class="row text-white overflow-hidden" style="height: 95vh;">
-  <div class="col-10 col-md-4">
-    <div class="d-flex flex-column h-100">
-      <div class="m-auto">
-        <h1 class="display-4">
-          A better way to trade your skins
-        </h1><br>
-        <p style="font-size: 1.1rem;">
-          Buy, sell, and trade skins easier and faster. All deals are secured with the highest level protection methods.
-        </p>
-        <button class="btn btn-lg bg-my-primary" style="font-size: 1.2rem;">
-          GET STARTED
-        </button>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <title>Page Title</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="static/css/main.css">
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://unpkg.com/vue-router@4.0.12/dist/vue-router.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
+</head>
+
+<body>
+<a href="https://steamcommunity.com/openid/login?openid.mode=checkid_setup&openid.ns=http://specs.openid.net/auth/2.0&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.return_to=http://127.0.0.1:8000/auth/social/login/steam?redirectUrl=http://127.0.0.1:8000/&callbackUrl=http://127.0.0.1:8000/login&redirectQuery=&openid.realm=http://127.0.0.1:8000">gg</a>
+  <div id="main">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg p-0">
+      <div class="container-fluid">
+        <div>
+          <router-link class="nav-link" to="/">
+            <img src="https://media.discordapp.net/attachments/608252322174337055/891256547030753300/afafaged.png"
+              style="width: 200px;">
+          </router-link>
+          <a class="d-inline d-md-none btn btn-sm text-white" data-bs-toggle="offcanvas" href="#offCanvasNav"
+            role="button" style="font-size: 1.5rem;" aria-controls="offCanvasNav">
+            <i class="fas fa-bars"></i>
+          </a>
+        </div>
+        <div class="d-none d-md-block text-uppercase me-auto">
+          <ul class="nav justify-content-center">
+            <li class="nav-item">
+              <a class="nav-link" to="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" to="/buy">Buy</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" to="/sell">Sell</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" to="/transaction">Transaction</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <a class="btn btn-success" href="#"><i class="fab fa-steam"></i> Steam Login</a>
+        </div>
       </div>
-    </div>
-  </div>
-  <div class="col-2 d-block d-md-none">
-    Placehoder
-  </div>
-  <div class="col-8 d-none d-md-flex flex-column">
-    <div class="my-auto d-flex">
-      <img src="https://media.discordapp.net/attachments/608252322174337055/891250817955397662/Untitled-2.png?width=669&height=669" class="img-fluid ms-auto" alt="">
-    </div>
-  </div>
-</div>
-{% if listing_latest.exists %}
-<div class="row text-white">
-  <div class="col-12">
-    <div>
-      <h3>Recently listed CSGO skins</h3>
-      <div class="d-flex flex-row item-container" id="item-container">
-
-        {% for listing in listing_latest %}
-        <div class="item-card" onclick="location.href='{{listing.get_absolute_url}}'" style="cursor: pointer;">
-          <div class="item-card-body">
-            <img class="img-fluid" src="{{listing.get_icon}}" alt="">
-            <p class="text-muted mb-0">
-              From <span class="text-white text-bold">{{listing.price}}</span>
-            </p>
+    </nav>
+    <div class="container">
+      <div class="row">
+        <div class="col-2 px-1 py-1" v-for="listing in listings">
+          <div class="item-card">
+            <div class="item-header">
+              <p style="font-size: 0.8rem;" class="p-0 m-0">{{listing.type}} | {{listing.exterior}}</p>
+              <p>
+                {{listing.name}}
+              </p>
+            </div>
+            <div class="item-body">
+              <img :src="listing.icon" class="img-fluid">
+            </div>
+            <div class="item-footer" style="font-size:0.8rem">
+              <p>Price Rs.{{listing.price}} <br>
+              Float {{listing.float}}</p>
+            </div>
           </div>
 
-          <div class="item-card-footer bg-my-primary">
-              <h6 class="m-1">
-                Explore
-              </h6>
-            </div>
-        </div>
-        {% endfor %}
         </div>
       </div>
     </div>
+
   </div>
-</div>
-{% endif %}
-{% endblock content %}
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+    integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+
+<script>
+var listing_url = 'http://127.0.0.1:8000/api/v1/listing/'
+
+const main = Vue.createApp({
+    data() {
+        return {
+            msg: 'fa',
+            listings: null,
+            user:null
+        }
+    }, created() {
+        fetch(listing_url)
+            .then(response => response.json())
+            .then(data => (this.listings = data));
+    }
+})
+
+main.mount('#main')
+
+
+
+
+</script>
+</body>
+
+</html>
