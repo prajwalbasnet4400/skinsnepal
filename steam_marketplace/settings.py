@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import dotenv
+import django_heroku
 
 dotenv.load_dotenv()
 
@@ -11,13 +12,11 @@ INVENTORY_ITEM = 'https://steamcommunity.com/id/theonionknight4400/inventory/#73
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
-FLOAT_API = "https://api.csgofloat.com/?url={inspect_url}"
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['182.93.82.39', '127.0.0.1', 'localhost']
+FLOAT_API = "https://api.csgofloat.com/?url={inspect_url}"
+DEBUG = bool(os.environ.get('DEBUG',0))
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split()
 AUTH_USER_MODEL = 'user.User'
 
 # Application definition
@@ -101,7 +100,6 @@ WSGI_APPLICATION = 'steam_marketplace.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -226,3 +224,4 @@ LOGIN_URL = '/auth/social/login/steam/'
 CORS_ALLOW_ALL_ORIGINS = True
 
 SITE_URL = 'http://127.0.0.1:8000'
+django_heroku.settings(locals())
