@@ -5,7 +5,7 @@ def verify_khalti(payload):
     key = settings.KHALTI_SECRET_KEY
     url = 'https://khalti.com/api/v2/payment/verify/'
     headers = {"Authorization": f"Key {key}"}
-    r = post(url,payload,headers=headers,timeout=3)
+    r = post(url,payload,headers=headers,timeout=1)
     r = r.json()
     response = {}
     if r.get('validation_error',None):

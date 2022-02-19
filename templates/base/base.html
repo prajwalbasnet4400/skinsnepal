@@ -58,36 +58,8 @@
     <script src="{% static 'js/main.js' %}"></script>
 
     <!-- Cart -->
-    {% if user.is_authenticated %}
-    <div class="cart_addon btn btn-danger" id="cart_addon">
-        <a href="{% url 'csgo:cart' %}" class="position-relative text-white fs-5">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="position-absolute top-0 left-0 translate-middle badge rounded-pill bg-success" id="cart_count">
-                {{user.cart.total_items}}
-            </span>
-        </a>
-    </div>
-    {% endif %}
-
     <!-- Notification -->
-    {% if user.is_authenticated %}
-
-    <script>
-        function notification(){
-        $.get(
-            '{% url "message:notification_count" %}', function (e) {
-                if (e['count'] != 0) {
-                    $('#notification_count').show()
-                    $('#notification_count').html(
-                        e['count']
-                    )
-                }
-            }
-        );}
-        setTimeout(notification,60)
-
-    </script>
-    {% endif %}
+    
 
     <script>
         const csrftoken = Cookies.get('csrftoken');

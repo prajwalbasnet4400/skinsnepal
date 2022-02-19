@@ -1,21 +1,30 @@
-import django_filters
+from django_filters import rest_framework as filters
 
-from .models import Listing, Transaction
+from .models import Listing, Transaction, InventoryItem
 
-class ListingFilter(django_filters.FilterSet):
-    
+
+class ListingFilter(filters.FilterSet):
+    name = filters.CharFilter(field_name='inventory__item__market_hash_name',lookup_expr='icontains')
     class Meta:
         model = Listing
         fields = {
-                    'price':['lte','gte'],
-                    'inventory__item__market_hash_name':['icontains'],
-                    }
+            'price': ['lte', 'gte'],
+            'id':['exact','in']
+        }
 
-class TransactionFilter(django_filters.FilterSet):
-    
+class InventoryItemFilter(filters.FilterSet):
+    name = filters.CharFilter(field_name='item__market_hash_name',lookup_expr='icontains')
+    class Meta:
+        model = InventoryItem
+        fields = {
+            'float':['lte']
+        }
+
+
+class TransactionFilter(filters.FilterSet):
     class Meta:
         model = Transaction
         fields = {
-                    'state':['exact'],
-                    'listing__inventory__item__market_hash_name':['icontains']
-                    }
+            'state': ['exact'],
+            'listing__inventory__item__market_hash_name': ['icontains']
+        }

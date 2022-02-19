@@ -1,4 +1,3 @@
-from csgo.models import Cart
 from .models import Profile
 import social_core.pipeline.social_auth
 
@@ -12,6 +11,3 @@ def save_profile(backend, user, response, *args, **kwargs):
         
         profile.avatar = extra_data.get('avatarfull')
         profile.save()
-
-def save_cart(backend,user,response,*args, **kwargs):
-    Cart.objects.get_or_create(owner=user)
