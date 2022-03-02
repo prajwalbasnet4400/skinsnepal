@@ -3,7 +3,7 @@
 <nav class="navbar navbar-expand-lg text-white">
   <div class="container-fluid">
     <div>
-      <a class="navbar-brand" href="{% url 'index' %}">
+      <a class="navbar-brand" href="{% url 'csgo:index' %}">
         <img src="https://media.discordapp.net/attachments/608252322174337055/891256547030753300/afafaged.png"
           width="200px">
       </a>
@@ -20,34 +20,19 @@
         <li class="nav-item">
           <a class="nav-link text-white" href="{% url 'csgo:inventory' %}">Sell</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link text-white" href="{% url 'csgo:transaction_list' %}">Transactions</a>
+        {% if user.is_authenticated %}
+        <li>
+          <a class="nav-link text-white" href="{% url 'csgo:cart' %}">Cart</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link text-white" href="{% url 'csgo:wallet_list' %}">Wallet</a>
-        </li>
+        {% endif %}
       </ul>
     </div>
     <div>
       {% if user.is_authenticated %}
-      <div class="btn btn-sm btn-success">
-        <a href="#" class="text-decoration-none text-white fs-6">
-          रु {{user.get_credit|intcomma}}
-        </a>
-      </div>
-      <div class="btn btn-sm btn-success">
-        <a href="{% url 'message:notification' %}" class="position-relative text-white fs-6">
-          <i class="fas fa-bell"></i>
-          <span class="position-absolute top-0 left-0 translate-middle badge rounded-pill bg-danger"
-            id="notification_count" style="display: none;">
-            0
-          </span>
-        </a>
-      </div>
-      <a class="btn btn-outline-success" href="#"><img src="{{user.profile.avatar}}" class="rounded" width="25px"
+      <a class="btn btn-outline-success" href="#"><img src="{{user.avatar}}" class="rounded" width="25px"
           alt=""> {{user}}</a>
       {% else %}
-      <a class="btn btn-success" href="{% url 'social:begin' 'steam' %}"><i class="fab fa-steam"></i> Login with
+      <a class="btn btn-success" href="{% url 'user:steam_login' %}"><i class="fab fa-steam"></i> Login with
         steam</a>
       {% endif %}
     </div>

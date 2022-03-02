@@ -1,161 +1,22 @@
 {% extends 'base/base.html' %} {% block content %}
-
-<style>
-    #float-range {
-        height: 17px;
-        -webkit-appearance: none;
-        margin: 10px 0;
-        width: 100%;
-    }
-
-    #float-range:focus {
-        outline: none;
-    }
-
-    #float-range::-webkit-slider-runnable-track {
-        width: 100%;
-        height: 5px;
-        cursor: pointer;
-        box-shadow: 0px 0px 0px #000000;
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-        border-radius: 1px;
-        border: 0px solid #000000;
-    }
-
-    #float-range::-webkit-slider-thumb {
-        box-shadow: 0px 0px 0px #000000;
-        border: 1px solid #2497E3;
-        height: 10px;
-        width: 5px;
-        border-radius: 50px;
-        background: #FFFFFF;
-        cursor: pointer;
-        -webkit-appearance: none;
-        margin-top: -3px;
-    }
-
-    #float-range:focus::-webkit-slider-runnable-track {
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-    }
-
-    #float-range::-moz-range-track {
-        width: 100%;
-        height: 5px;
-        cursor: pointer;
-        animate: 0.2s;
-        box-shadow: 0px 0px 0px #000000;
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-        border-radius: 1px;
-        border: 0px solid #000000;
-    }
-
-    #float-range::-moz-range-thumb {
-        box-shadow: 0px 0px 0px #000000;
-        border: 1px solid #2497E3;
-        height: 10px;
-        width: 5px;
-        border-radius: 50px;
-        background: #FFFFFF;
-        cursor: pointer;
-    }
-
-    #float-range::-ms-track {
-        width: 100%;
-        height: 5px;
-        cursor: pointer;
-        animate: 0.2s;
-        background: transparent;
-        border-color: transparent;
-        color: transparent;
-    }
-
-    #float-range::-ms-fill-lower {
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-        border: 0px solid #000000;
-        border-radius: 2px;
-        box-shadow: 0px 0px 0px #000000;
-    }
-
-    #float-range::-ms-fill-upper {
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-        border: 0px solid #000000;
-        border-radius: 2px;
-        box-shadow: 0px 0px 0px #000000;
-    }
-
-    #float-range::-ms-thumb {
-        margin-top: 1px;
-        box-shadow: 0px 0px 0px #000000;
-        border: 1px solid #2497E3;
-        height: 10px;
-        width: 5px;
-        border-radius: 50px;
-        background: #FFFFFF;
-        cursor: pointer;
-    }
-
-    #float-range:focus::-ms-fill-lower {
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-    }
-
-    #float-range:focus::-ms-fill-upper {
-        background: rgb(0, 188, 140);
-        background: rgb(0, 188, 140);
-        background: linear-gradient(90deg, #00bc8c 7%, #3498db 0px, #3498db 15%, #375a7f 0px, #375a7f 38%, #f39c12 0px, #f39c12 45%, #e74c3c 0%);
-    }
-</style>
 <div class="container">
     <div class="row text-white">
-        <div>
-            <form method="get">
-                <div>
-                    <label for="filter.form.inventory__item__market_hash_name__icontains.id_for_label ">Item
-                        Name</label>
-                    {{ filter.form.inventory__item__market_hash_name__icontains }}
-                    <label for="filter.form.price__lte.id_for_label ">Price less than</label>
-                    {{ filter.form.price__lte }}
-                    <button type="submit" class="btn btn-small btn-success">Search</button>
-                </div>
-            </form>
-        </div>
-        <hr style="opacity: 0;">
         {% for listing in filter.qs %}
-        <div class="col-6 col-md-4 col-lg-2 text-black p-0 pe-1">
+        <div class="col-6 col-md-4 col-lg-2 text-black p-0 g-1">
+            <a href="{{listing.get_absolute_url}}" style="text-decoration:none;">
             <div class="item-card"
                 style="cursor: pointer;min-width:auto;max-width: 100%;position: relative;">
-                <div class="item-card-body" onclick="location.href='{{listing.get_absolute_url}}';">
+                <div class="item-card-body">
                     <p class="text-muted m-0" style="font-size: 0.8rem;">
                         <span style="font-size: 0.7rem;">
                             {{listing.item.sub_type}} | {{listing.item.exterior}}
                         </span>
                         <br><span style="color: #{{listing.item.rarity_color}};">{{listing.item.name}}</span>
                     </p>
-                    <img class="img-fluid" style="position: relative;z-index: 99;" src="{{listing.get_icon}}" alt="">
+                    <img class="img-fluid" style="position: relative;z-index: 99;" src="{{listing.icon}}" alt="">
                     <p class="text-muted mb-0">
-                        Price <span class="text-cash-green text-bold">Rs {{listing.get_price}}</span><br>
-                        Float <span class="text-white text-bold">{{listing.float|truncatechars:"8"}}</span><br>
-                        <input type="range" disabled class="form-control" id="float-range"
-                            style="border: none;background: none;" value="{{listing.float}}" min=0 max=1 step="0.001">
-
+                         <span class="text-muted text-bold">Rs {{listing.get_price}}</span><br>
                     </p>
-                </div>
-
-                <div class="item-card-footer">
-                    <button class="addtocart btn btn-success" style="width: 100%;" data-pk="{{listing.pk}}">
-                        Add to cart
-                    </button>
                 </div>
                 <div style="position: absolute;right: 0;top: 0;pointer-events: none" class="d-flex flex-column">
                     {% for addon in listing.addons %}
@@ -165,30 +26,10 @@
                     {% endfor %}
                 </div>
             </div>
+        </a>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock content %} {% block js %}
-<script>
-    cart = Cookies.get('cart');
-        // Add to cart
-        $('.addtocart').click(function(event){
-            event.preventDefault();
-            event.target.setAttribute('disabled','true');
-            var item = event.target.getAttribute('data-pk');
-            $.post('{% url 'csgo:cart_add' %}',{'item':item,'csrfmiddlewaretoken':csrftoken},function(data){
-                if (data.success==true){
-                    Notiflix.Notify.Success(data.message);
-                    var cart = $('#cart_count');
-                    var count = cart.text(parseInt(cart.text())+1);
-
-                }else{
-                    Notiflix.Notify.Failure(data.message);
-                }
-            });
-        }
-    )
-</script>
-
 {% endblock js %}

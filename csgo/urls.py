@@ -1,31 +1,37 @@
-from django.urls import path
+from django.urls import path,include
 from . import views
 
 app_name = 'csgo'
 
-urlpatterns = [
+listing_patterns = [
     path('shop/',views.ListingBuyView.as_view(),name='shop'),
-    
-    path('detail/<uuid:uuid>/',views.ListingDetailView.as_view(),name='detail'),
-    path('delete/<uuid:uuid>/',views.ListingDeleteView.as_view(),name='delete'),
-    
-    path('inventory/', views.InventoryListView.as_view(),name='inventory'),
-    path('inventory/create/', views.ListingCreateView.as_view(),name='inventory_create'),
-    path('inventory/create/to_list/', views.InventoryToList.as_view(),name='to_list'),
+    path('detail/<str:pk>/',views.ListingDetailView.as_view(),name='detail'),
+    path('delete/<str:pk>/',views.ListingDeleteView.as_view(),name='delete'),
+]
 
-    path('cart/', views.CartView.as_view(),name='cart'),
-    path('cart/add/', views.CartAddView.as_view(),name='cart_add'),
-    path('cart/delete/', views.CartDeleteView.as_view(),name='cart_delete'),
-    path('cart/checkout/', views.CheckOutView.as_view(),name='checkout'),
+cart_patterns = [
+    path('', views.CartView.as_view(),name='cart'),
+    path('delete/', views.CartDeleteView.as_view(),name='cart_delete'),
+]
 
+inventory_patterns = [
+    path('', views.InventoryListView.as_view(),name='inventory'),
+    path('create/<str:pk>/', views.ListingCreateView.as_view(),name='inventory_create'),
+    path('manage/', views.InventoryManageView.as_view(),name='inventory_update'),
+]
 
-
+transaction_patterns = [
     path('transactions/', views.TransactionListView.as_view(),name='transaction_list'),
     path('transaction/<str:pk>/', views.TransactionDetailView.as_view(),name='transaction'),
-    
-    path('wallet/', views.WalletView.as_view(),name='wallet_list'),
+]
 
-    path('get_item_prices/',views.get_item_price_view,name='price'),
-    path('test/',views.test)
-    
+wallet_patterns = [
+    path('wallet/', views.WalletView.as_view(),name='wallet_list'),
+]
+
+urlpatterns = [
+    path('',views.IndexView.as_view(),name='index'),
+    path('item/',include(listing_patterns)),
+    path('inventory/',include(inventory_patterns)),
+    path('cart/',include(cart_patterns))
 ]

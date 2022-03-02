@@ -3,85 +3,55 @@
 
 {% block content %}
 <div class="container text-white">
-    <div class="row">
-        <div class="d-flex flex-row-reverse">
-            <button type="button" id="proceed" class="btn btn-success">Proceed to Pricing</button>
+    <div class="d-flex justify-content-between">
+        <div class="my-2">
+            <h4 class="m-0">
+                Select Skin To Sell
+            </h4>
         </div>
-        {% with steamid=request.user.steamid %}
+
+        <div class="my-2">
+            <form action="{% url 'csgo:inventory_update' %}" method="post">
+                {% csrf_token %}
+                <button class="btn btn-info" type="submit">Update Inventory</button>
+            </form>
+        </div>
+    </div>
+    <div class="row m-0">
         {% for item in inventory %}
-        <div class="col-6 col-md-4 col-lg-2 text-black py-1 pe-1">
-            <div class="item-card" style="cursor: pointer;min-width:auto;max-width: 100%;position: relative;">
-                <div class="item-card-body">
-                    <div class="trigger">
-                        <input type="checkbox" data-assetid="{{item.assetid}}" style="display: none;">
-                        <p class="text-muted m-0" style="font-size: 0.8rem;">
-                            <span style="font-size: 0.7rem;">
-                                {{item.item.sub_type}} | {{item.item.exterior}}
-                            </span>
-                            <br><span style="color: #{{item.item.rarity_color}};">{{item.item.name}}</span>
-                        </p>
-                        <img class="img-fluid" style="position: relative;z-index: 99;" src="{{item.item.get_icon}}"
-                            alt="">
-                        <p class="text-muted mb-0">
-                            Float <span class="text-white text-bold">{{item.float|truncatechars:"12"}}</span><br>
-                            Paintseed <span class="text-white text-bold">{{item.paintseed}}</span><br>
-                        </p>
+        <div class="col-6 col-md-4 col-lg-2 text-black p-0 g-1">
+            <div class="">
+                <a href="{% url 'csgo:inventory_create' pk=item.pk %}" style="text-decoration:none;">
+                    <div class="item-card" style="cursor: pointer;min-width:auto;max-width: 100%;position: relative;">
+                        <div class="item-card-body">
+                            <p class="text-muted m-0" style="font-size: 0.8rem;">
+                                <span style="font-size: 0.7rem;">
+                                    {{item.item.sub_type}} | {{item.item.exterior}}
+                                </span>
+                                <br><span style="color: #{{item.item.rarity_color}};">{{item.item.name}}</span>
+                            </p>
+                            <img class="img-fluid" style="position: relative;z-index: 99;" src="{{item.icon}}" alt="">
+                            <p class="text-muted mb-0">
+                                <span class="text-muted text-bold">{{item.get_float}}</span><br>
+                            </p>
+                        </div>
+                        <div style="position: absolute;right: 0;top: 0;pointer-events: none" class="d-flex flex-column">
+                            {% for addon in item.addons.all %}
+                            <div class="p-1">
+                                <img src="{{addon.get_icon_small}}" class="img-fluid" width="50px">
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div class="check-tick fs-4" style="position: absolute;right: 50%;top: 38%;color: var(--bs-success);z-index: 99;display: none;pointer-events: none;">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <a target="_blank"
-                        href="https://steamcommunity.com/profiles/{{steamid}}/inventory/#730_2_{{item.assetid}}"
-                        class="btn btn-sm btn-dark"><i class="fas fa-box"></i></a>
-                    <a href="{{item.inspect_url}}" class="btn btn-sm btn-dark"><i class="fas fa-eye"></i></a>
-                </div>
-                <div style="position: absolute;right: 0;top: 0;pointer-events: none;" class="d-flex flex-column">
-                    {% for addon in item.addons.all %}
-                    <div class="p-1">
-                        <img src="{{addon.get_icon_small}}" class="img-fluid" width="50px">
-                    </div>
-                    {% endfor %}
-                </div>
+                </a>
             </div>
         </div>
         {% endfor %}
-        {% endwith %}
     </div>
 </div>
 
 {% endblock content %}
 
 {% block js %}
-<script>
-    // Check logic
-    $('.trigger').click(function (e) {
-        var check = $(this).find('input:checkbox')
-        if (check.is(':checked')) {
-            $(this).siblings('.check-tick').hide();
-            $(this).removeClass('greyscale');
-            check.attr("checked", false);
-        } else {
 
-            $(this).siblings('.check-tick').show();
-            $(this).addClass('greyscale');
-            check.attr("checked", true);
-        }
-    });
-
-    // Proceed logic
-    $('#proceed').click(function () {
-        var items = ''
-        $(':checked[data-assetid]').each(function (index, value) {
-            var assetid = value.dataset.assetid;
-            items = items + assetid + ','
-        });
-        var data = {
-            'csrfmiddlewaretoken': csrftoken,
-            'item': items
-        };
-        $.post("", data, function (data) {
-            window.location = data;
-        });
-    });
-</script>
 {% endblock js %}

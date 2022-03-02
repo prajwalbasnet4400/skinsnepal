@@ -8,7 +8,6 @@
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th>Addons</th>
                         <th>Price</th>
                         <th>Action</th>
                     </tr>
@@ -16,26 +15,27 @@
                 <tbody>
 
                     {% for item in buy %}
-                    <tr data-pk="{{item.pk}}">
+                    <tr data-pk="{{item.listing.pk}}">
                         <td class="name">
                             <a style="text-decoration: none;"
-                                href="{% url 'csgo:detail' uuid=item.listing.unique_id %}">
-                                <img src="{{item.listing.get_icon_small}}" width="64" alt="">
-                                {{item.name}}
+                                href="{% url 'csgo:detail' pk=item.listing.pk %}">
+                                <img src="{{item.listing.icon}}" width="64" alt="">
+                                {{item.listing}}
                             </a>
-                        </td>
-                        <td>
-                            {% for addon in item.listing.inventory.addons.all %}
-                            <img src="{{addon.get_icon}}" width="40px" alt="">
-                            {% endfor %}
+                            <div>
+                                {% for addon in item.listing.inventory.addons.all %}
+                                <img src="{{addon.get_icon}}" width="40px" alt="">
+                                {% endfor %}
+                            </div>
                         </td>
                         <td>रु {{item.listing.get_price}}</td>
                         <td>
                             <div>
-                                <button type="button" onclick="remove_item('{{item.pk}}')"
-                                    class="btn btn btn-outline-danger me-1"><i class="fas fa-times"></i></button>
-                                <button type="button" class="btn btn-success payment-button" data-pk="{{item.pk}}"><i
-                                        class="fas fa-money-bill"></i></button>
+                                <form action="{% url 'csgo:cart_delete' %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="cartitem" value="{{item.pk}}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -47,47 +47,3 @@
 </div>
 </div>
 {% endblock content %}
-
-{% block js %}
-<script>
-    function remove_item(id) {
-        var data = {
-            'id': id,
-        }
-        $.ajax(
-            {
-                url: "{% url 'csgo:cart_delete' %}",
-                method: 'POST',
-                data: data,
-                headers: { 'X-CSRFToken': csrftoken },
-                success: function () {
-                    var selector = $(`tr[data-pk='${id}']`);
-                    selector.fadeOut();
-                    Notiflix.Notify.Info(`${selector.find('td.name').text()} removed from cart !`);
-                }
-            }
-        );
-    };
-    $('.payment-button').click(function (element) {
-        var e = element.currentTarget;
-        var item = e.getAttribute('data-pk');
-        var data = {
-            'item': item,
-        }
-        $.ajax(
-            {
-                url: "{% url 'csgo:checkout' %}",
-                method: 'POST',
-                data: data,
-                headers: { 'X-CSRFToken': csrftoken },
-                success: function () {
-                    var selector = $(`tr[data-pk='${item}']`);
-                    selector.fadeOut();
-                    Notiflix.Notify.Success(`Initiated Transaction`);
-                }
-            }
-        );
-        
-    });
-</script>
-{% endblock js %}

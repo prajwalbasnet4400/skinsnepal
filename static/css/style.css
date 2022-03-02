@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand&display=swap');
 @font-face {
     font-family: 'firasans-light';
     src: url('/static/fonts/firasans-light');
@@ -11,7 +12,6 @@
     font-family: 'firasans-regular';
     src: url('/static/fonts/firasans-regular');
 }
-
 :root{
     --cash-green:#00bc8c;
     --cash-black:#484848;
@@ -23,7 +23,7 @@
 
 
 body{
-    font-family: 'firasans-regular';
+    font-family: 'Quicksand';
     font-size: 0.9rem;
 }
 
@@ -38,7 +38,7 @@ body{
 }
 
 h1{
-    font-family: 'firasans-medium';
+    font-family: 'Quicksand';
 }
 
 .item-container{

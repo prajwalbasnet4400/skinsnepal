@@ -219,7 +219,7 @@ KHALTI_DETAIL_URL = 'https://khalti.com/api/v2/merchant-transaction/<idx>/'
 KHALTI_STATUS_URL = 'https://khalti.com/api/v2/payment/status/'
 
 LOGIN_REDIRECT_URL = ''
-LOGIN_URL = '/auth/social/login/steam/'
+LOGIN_URL = '/user/auth/steam/'
 
 CORS_ALLOW_ALL_ORIGINS = True
 

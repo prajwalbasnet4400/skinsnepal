@@ -25,14 +25,9 @@
     <!-- Fonts -->
     <link rel="stylesheet" href="{% static 'fonts/font_style.css' %}">
 
-    <!-- select2  css-->
-    {{form.media.css}}
     <!-- custom css -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block css %} {% endblock css %}
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-    <script src="https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.17.0.0.0/khalti-checkout.iffe.js"></script>
-
 </head>
 
 <body style="background: #222227;min-height: 100vh;display: flex;flex-direction: column;">
@@ -46,6 +41,8 @@
     </div>
 
     {% include 'base/footer.html' %}
+
+
     <!-- Required Js -->
     {{form.media.js}}
     <!-- Bootstrap JS -->
@@ -57,16 +54,17 @@
     <script src="{% static 'js/notiflix-2.7.0.min.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
 
-    <!-- Cart -->
-    <!-- Notification -->
-    
-
     <script>
         const csrftoken = Cookies.get('csrftoken');
     </script>
-
-
     {% block js %} {% endblock js %}
+    {% if messages %}
+        {% for message in messages %}
+        <script>
+            Notiflix.{{message.extra_tags}}.{{message.level_tag|capfirst}}('{{message}}','{{message}}')
+        </script>
+        {% endfor %}
+    {% endif %}
 </body>
 
 </html>

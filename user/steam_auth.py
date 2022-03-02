@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 import re
 import requests
 from urllib.parse import urlencode
-from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 USER_MODEL = get_user_model()
@@ -16,8 +15,8 @@ ABSOLUTE_URL = getattr(settings, 'ABSOLUTE_URL', 'localhost:8000')
 STEAM_LOGIN_URL = 'https://steamcommunity.com/openid/login'
 
 
-def auth():
-    STEAM_AUTH_CALLBACK_URL = f"http://127.0.0.1:8000{reverse('api:user:steam_callback')}"
+def auth(callback_url):
+    STEAM_AUTH_CALLBACK_URL = f"http://127.0.0.1:8000{callback_url}"
 
     params = {
         'openid.ns': 'http://specs.openid.net/auth/2.0',

@@ -76,8 +76,11 @@ class Listing(models.Model):
     def item(self):
         return self.inventory.item
 
+    def get_price(self):
+        return str(self.price)[:-2]
+        
     def float(self):
-        return self.inventory.float
+        return str(self.inventory.float)[:8]
 
     def icon(self):
         return self.inventory.item.get_icon()
@@ -106,6 +109,9 @@ class Listing(models.Model):
     def type(self):
         return self.inventory.item.get_sub_type()
 
+    def get_steam_inv_url(self):
+        return f"{self.owner.get_steam_url()}/inventory/#730_2_{self.inventory.assetid}"
+
     def save(self,*args, **kwargs):
         if not self.pk:
             inv = self.inventory
@@ -114,7 +120,7 @@ class Listing(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('api:listing-detail', args=[str(self.pk)])
+        return reverse('csgo:detail', args=[str(self.pk)])
     
     def __str__(self):
         return self.inventory.item.market_hash_name
@@ -128,6 +134,9 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.owner.username}"
+    
+    def get_owner(self):
+        return self.owner
 
 class InventoryItem(models.Model):
     class ItemStateChoices(models.TextChoices):
@@ -157,6 +166,9 @@ class InventoryItem(models.Model):
     def get_addons(self):
         return self.addons.all()
 
+    def get_float(self):
+        return str(self.float)[:8]
+
     def icon(self):
         return self.item.get_icon()
 
@@ -165,6 +177,12 @@ class InventoryItem(models.Model):
         
     def __str__(self):
         return self.item.market_hash_name
+    
+    def get_steam_inv_url(self):
+        return f"{self.owner.get_steam_url()}/inventory/#730_2_{self.assetid}"
+
+    def get_owner(self):
+        return self.owner
 
 class Addon(models.Model):
     item = models.ForeignKey(Item,on_delete=models.PROTECT)
