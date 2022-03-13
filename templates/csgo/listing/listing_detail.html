@@ -22,8 +22,15 @@
                             <h2 style="font-weight: bold;color: #00bc8c;">रु {{listing.get_price}}</h2>
                             <form action="" method="post">
                                 {% csrf_token %}
-                                <button class="btn btn-success btn-sm">
-                                    Add To Cart
+                                <button class="btn btn-success btn-sm" type="submit">
+                                    Add To Wishlist
+                                </button>
+                            </form>
+                            <form action="{% url 'csgo:chat_manage' %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="item" value="{{listing.pk}}">
+                                <button class="btn btn-primary btn-sm">
+                                    Chat with seller
                                 </button>
                             </form>
                         </div>
@@ -60,8 +67,8 @@
                         <div class="row">
                             {% for addon in listing.addons %}
                             <div class="col-3">
-                                <img src="{{addon.get_icon_small}}" class="img-fluid" data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom" title="{{addon.market_hash_name}}">
+                                <img src="{{addon.icon}}" class="img-fluid" data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom" title="{{addon.item.market_hash_name}}">
                             </div>
                             {% endfor %}
                         </div>

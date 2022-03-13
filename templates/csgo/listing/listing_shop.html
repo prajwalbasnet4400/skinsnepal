@@ -1,32 +1,88 @@
 {% extends 'base/base.html' %} {% block content %}
+{% load url_replace %}
 <div class="container">
+  <div class="my-2">
+    <h4 class="m-0">
+        Browse Skins
+    </h4>
+</div>
+    <div class="my-1 d-flex justify-content-between">
+        <div>
+            <form action="" method="get" class="form-format">
+                <div class="d-flex align-items-center">
+                    {{filter.form.name}}
+                    <button type="submit" class="btn btn-sm btn-dark btn-search p-2 ms-2"><i
+                            class="fas fa-search"></i></button>
+                </div>
+            </form>
+        </div>
+        <div class="pagination" id="pagination">
+            <nav>
+                <ul class="pagination">
+                {% if filter.page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% url_replace request 'page' filter.page_obj.previous_page_number %}" aria-label="Previous">
+                      <span aria-hidden="true">&lt;</span>
+                    </a>
+                  </li>
+                  {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link disabled" href="#" aria-label="Previous">
+                      <span aria-hidden="true">&lt;</span>
+                    </a>
+                  </li>
+                  {% endif %}
+
+                  <li class="page-item disabled"><a class="page-link" href="#">{{filter.page_obj.number}}</a></li>
+                  
+                  {% if filter.page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% url_replace request 'page' filter.page_obj.next_page_number %}" aria-label="Next">
+                      <span aria-hidden="true">&gt;</span>
+                    </a>
+                  </li>
+                  {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link disabled" href="#" aria-label="Next">
+                      <span aria-hidden="true">&gt;</span>
+                    </a>
+                  </li>
+                  {% endif %}
+                </ul>
+              </nav>
+        </div>
+    </div>
     <div class="row text-white">
-        {% for listing in filter.qs %}
+        {% for listing in filter.page_obj %}
         <div class="col-6 col-md-4 col-lg-2 text-black p-0 g-1">
             <a href="{{listing.get_absolute_url}}" style="text-decoration:none;">
-            <div class="item-card"
-                style="cursor: pointer;min-width:auto;max-width: 100%;position: relative;">
-                <div class="item-card-body">
-                    <p class="text-muted m-0" style="font-size: 0.8rem;">
-                        <span style="font-size: 0.7rem;">
-                            {{listing.item.sub_type}} | {{listing.item.exterior}}
-                        </span>
-                        <br><span style="color: #{{listing.item.rarity_color}};">{{listing.item.name}}</span>
-                    </p>
-                    <img class="img-fluid" style="position: relative;z-index: 99;" src="{{listing.icon}}" alt="">
-                    <p class="text-muted mb-0">
-                         <span class="text-muted text-bold">Rs {{listing.get_price}}</span><br>
-                    </p>
+                <div class="item-card" style="cursor: pointer;min-width:auto;max-width: 100%;position: relative;">
+                    <div class="item-card-body">
+                        <p class="text-muted m-0" style="font-size: 0.8rem;">
+                            <span style="font-size: 0.7rem;">
+                                {{listing.item.sub_type}} | {{listing.item.exterior}}
+                            </span>
+                            <br><span style="color: #{{listing.item.rarity_color}};">{{listing.item.name}}</span>
+                        </p>
+                        <img class="img-fluid" style="position: relative;z-index: 99;" src="{{listing.icon}}" alt="">
+                        <div class="text-center">
+                            <span class="text-muted" style="font-size: 0.8rem;">{{listing.float}}</span>
+                            <input class="float-field" type="range" name="float" value="{{listing.float}}" min="0"
+                                max="1" step="0.0001" disabled>
+                        </div>
+                        <p class="mb-0 text-center">
+                            <span class="text-cash-green" style="font-weight: bold;">Rs {{listing.get_price}}</span>
+                        </p>
+                    </div>
+                    <div style="position: absolute;right: 0;top: 0;pointer-events: none" class="d-flex flex-column">
+                        {% for addon in listing.addons %}
+                        <div class="p-1">
+                            <img src="{{addon.icon}}" class="img-fluid" width="50px">
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div style="position: absolute;right: 0;top: 0;pointer-events: none" class="d-flex flex-column">
-                    {% for addon in listing.addons %}
-                    <div class="p-1">
-                        <img src="{{addon.get_icon_small}}" class="img-fluid" width="50px">
-                    </div>    
-                    {% endfor %}
-                </div>
-            </div>
-        </a>
+            </a>
         </div>
         {% endfor %}
     </div>

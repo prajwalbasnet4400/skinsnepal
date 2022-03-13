@@ -57,6 +57,3 @@ Trusted seller program:
     - Require steam web API key
     - Allows us to verify trade and track items regardless of the unique id change
     - More fine grain control of trade transaction
-
-UI changes:
-    - Add sticker to : http://127.0.0.1:8000/csgo/inventory/create/

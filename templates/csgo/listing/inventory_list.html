@@ -17,7 +17,7 @@
             </form>
         </div>
     </div>
-    <div class="row m-0">
+    <div class="row">
         {% for item in inventory %}
         <div class="col-6 col-md-4 col-lg-2 text-black p-0 g-1">
             <div class="">
@@ -31,14 +31,16 @@
                                 <br><span style="color: #{{item.item.rarity_color}};">{{item.item.name}}</span>
                             </p>
                             <img class="img-fluid" style="position: relative;z-index: 99;" src="{{item.icon}}" alt="">
-                            <p class="text-muted mb-0">
-                                <span class="text-muted text-bold">{{item.get_float}}</span><br>
-                            </p>
+                            <div class="text-center">
+                                <span class="text-muted" style="font-size: 0.8rem;">{{item.float}}</span>
+                                <input class="float-field" type="range" name="float" value="{{item.float}}" min="0"
+                                    max="1" step="0.0001" disabled>
+                            </div>
                         </div>
                         <div style="position: absolute;right: 0;top: 0;pointer-events: none" class="d-flex flex-column">
                             {% for addon in item.addons.all %}
                             <div class="p-1">
-                                <img src="{{addon.get_icon_small}}" class="img-fluid" width="50px">
+                                <img src="{{addon.icon}}" class="img-fluid" width="50px">
                             </div>
                             {% endfor %}
                         </div>

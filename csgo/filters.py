@@ -1,16 +1,14 @@
 from django_filters import rest_framework as filters
 
 from .models import Listing, Transaction, InventoryItem
-
+from django.forms.widgets import TextInput
 
 class ListingFilter(filters.FilterSet):
-    name = filters.CharFilter(field_name='inventory__item__market_hash_name',lookup_expr='icontains')
+    name = filters.CharFilter(field_name='inventory__item__market_hash_name',
+                                lookup_expr='icontains',label='Search',widget=TextInput(attrs={'placeholder':'MAC-10 | Propaganda (Battle-Scarred)'}))
     class Meta:
         model = Listing
-        fields = {
-            'price': ['lte', 'gte'],
-            'id':['exact','in']
-        }
+        fields = ['name']
 
 class InventoryItemFilter(filters.FilterSet):
     name = filters.CharFilter(field_name='item__market_hash_name',lookup_expr='icontains')

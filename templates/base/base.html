@@ -43,8 +43,6 @@
     {% include 'base/footer.html' %}
 
 
-    <!-- Required Js -->
-    {{form.media.js}}
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
@@ -58,6 +56,44 @@
         const csrftoken = Cookies.get('csrftoken');
     </script>
     {% block js %} {% endblock js %}
+
+    <style>
+        #pagination a{
+            background-color: transparent;
+            color: hsl(240, 100%, 80%);
+            border:hsl(240, 7%, 25%) solid 1px;
+        }
+
+        #pagination .disabled a{
+            background-color: transparent;
+            color: #b6b6b6;
+        }
+
+        .form-format input,.form-format textarea{
+            color: white;
+            background-color: transparent;
+            padding: 5px;
+            margin: 0px;
+            border-radius: 5px;
+            min-width: 250px;
+            border:#3b3b44 solid 1px;
+
+        }
+        .form-format input:focus,.form-format textarea:focus{
+            border: #cfcfcf 1px solid;
+            color: white;
+            background-color: transparent;
+            outline: none;
+        }
+
+        .btn-search{
+            border:hsl(240, 7%, 25%) solid 1px;
+            color: white;
+            background-color: transparent;
+        }
+    </style>
+
+
     {% if messages %}
         {% for message in messages %}
         <script>

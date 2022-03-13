@@ -1,0 +1,15 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<noscript><strong>We're sorry but doesn't work properly without JavaScript enabled. Please enable it to
+    continue.</strong></noscript>
+    <div id="app" class="m-1"></div>
+    {% endblock content %}
+    
+    {% block js %}
+    <script src="{% static 'js/reconnecting-websocket.js' %}"></script>
+    <link href="{% static 'css/app.d0391fd0.css' %}" rel="stylesheet">
+    <script src="{% static 'js/chunk-vendors.min.js' %}"></script>
+    <script src="{% static 'js/app.min.js' %}"></script>
+{% endblock js %}

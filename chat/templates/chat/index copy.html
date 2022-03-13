@@ -1,0 +1,128 @@
+{% extends 'base/base.html' %}
+{% block css %}
+<script src="https://unpkg.com/vue@3"></script>
+
+{% endblock css %}
+
+
+{% block content %}
+<div id="app">
+    <div class="container">
+        <div class="row">
+            <div class="col-2">
+                <div v-for="room in rooms" :key="room.pk" >
+                    <div v-for="user in room.user" :key="user.steamid64">
+                        <div v-if="user.steamid64 != current_user" class="p-1 border" @click="chat(room.pk,user.steamid64)">
+                            [[user.username]]
+                            [[user.steamid64]]
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-10" >
+                <div class="form-format">
+                    <div class="w-100 border p-2 my-2 rounded" style="height: 60vh;overflow-y: scroll;">
+                        <div v-for="message in messages">
+                            <div class="my-2" :class="{'text-end':is_owner(message.from_user)}">
+                                <span class="p-1 rounded-1" style="border: #3b3b44 solid 1px;">
+                                    [[message.message]]
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <input class="form-control" v-model="chatInput" type="text" id="chat-input" v-on:keyup.enter="send_message()">
+                        <button class="btn btn-success" id="chat-submit" @click="send_message()">send</button>
+                        <button class="btn btn-danger" id="chat-submit" @click="get_rooms()">send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+
+{% block js %}
+
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                rooms: [],
+                activeRoom: '',
+                current_user:'{{request.user.steamid64}}',
+                messages:[],
+                chatInput:''
+                
+            }
+        },
+        mounted(){
+            this.connectSocket()
+            this.listenSocket()
+        },
+        methods: {
+            is_owner(steamid64){
+                return this.current_user==steamid64
+            }
+            ,
+            get_messages(){
+            }
+            ,
+            get_rooms(){
+                data = {'type':'message.chat.get_rooms'}
+                this.send_data(data)
+            },
+            send_message(){
+                data = {'type':'message.chat.send','message':this.chatInput,'room':this.activeRoom};
+                this.send_data(data);
+                this.chatInput = ''
+            },
+            add_to_room(steamid64){
+                data = {'type':'message.chat.add','to_user':steamid64}
+                this.send_data(data)
+
+            }
+            ,
+            send_data(data) {
+                this.chatSocket.send(JSON.stringify(data))
+            }
+            ,
+            chat(room,steamid64) {
+                this.activeRoom = room;
+                this.add_to_room(steamid64)
+                Notiflix.Notify.Info('connterct')
+
+            },
+            connectSocket() {
+                if (this.chatSocket){
+                    this.chatSocket.close()
+                }
+                const chatSocket = new WebSocket(
+                    'ws://'
+                    + window.location.host
+                    + '/ws/chat/');
+                this.activeRoom = true;
+                this.chatSocket = chatSocket;
+                Notiflix.Notify.Success('Connected')
+            },
+            listenSocket() {
+                let self = this;
+                this.chatSocket.onmessage = function (e) {
+                    const data = JSON.parse(e.data);
+                    if (data.type=='chat_send'){
+                        self.messages.push(data)
+                    }else if(data.type == 'message.chat.get_rooms'){
+                        self.rooms =data.rooms
+
+                    }
+                }
+            }
+        },
+        delimiters: ['[[', ']]'],
+        });
+    app.mount('#app');
+</script>
+
+{% endblock js %}

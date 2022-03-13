@@ -1,3 +1,4 @@
+from unicodedata import name
 from django.urls import path,include
 from . import views
 
@@ -29,9 +30,14 @@ wallet_patterns = [
     path('wallet/', views.WalletView.as_view(),name='wallet_list'),
 ]
 
+chat_patterns = [
+    path('chat_manage/', views.ChatManageView.as_view(),name='chat_manage')
+]
+
 urlpatterns = [
     path('',views.IndexView.as_view(),name='index'),
     path('item/',include(listing_patterns)),
     path('inventory/',include(inventory_patterns)),
-    path('cart/',include(cart_patterns))
+    path('cart/',include(cart_patterns)),
+    path('chat_manage/',include(chat_patterns))
 ]

@@ -1,19 +1,20 @@
-from distutils.log import error
 from django.db.models.aggregates import Max, Min
-from django.forms import ValidationError
+from django.urls import reverse
 from django.views import View
 from django.http.response import HttpResponse, JsonResponse
 from django.views.generic.base import TemplateView
 from django.views.generic import ListView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+
 
 from django.contrib import messages
-from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .api_parsers.steam_inventory import Inventory
 from .api_parsers.parsers import get_item_price
 from .forms import InventoryCreateForm
+from chat.models import Room, Message
 
 from . import models
 from . import filters
@@ -25,14 +26,16 @@ class IndexView(TemplateView):
 
 class ListingBuyView(TemplateView):                                 # TODO: Pagination
     template_name = 'csgo/listing/listing_shop.html'
-    paginate_by = 50
+    paginate_by = 30
     queryset = models.Listing.objects.select_related('inventory', 'inventory__item').prefetch_related('inventory__addons').filter(
-        purpose="SELL", inventory__item_state=models.InventoryItem.ItemStateChoices.LIS)
+        purpose="SELL", inventory__item_state=models.InventoryItem.ItemStateChoices.LIS).order_by('date_listed')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['filter'] = filters.ListingFilter(
-            self.request.GET, self.queryset)
+        page_no = self.request.GET.get('page')
+        filtered = filters.ListingFilter(self.request.GET, self.queryset)
+        filtered.page_obj = Paginator(filtered.qs,self.paginate_by).get_page(page_no)
+        context['filter'] = filtered
         return context
 
 
@@ -60,24 +63,11 @@ class ListingDetailView(DetailView):
 class InventoryListView(LoginRequiredMixin, TemplateView):
     template_name = 'csgo/listing/inventory_list.html'
 
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
-        inv = Inventory(self.request.user)
-        inv.update_inventory()
-        return response
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["inventory"] = models.InventoryItem.objects.filter(
             owner=self.request.user, item_state=models.InventoryItem.ItemStateChoices.INV).select_related('item').prefetch_related('addons')
         return context
-
-    def post(self, request):
-        data = request.POST
-        items = data.get('item')
-        request.session['to_list'] = items
-        return HttpResponse(reverse('csgo:inventory_create'))
-
 
 class ListingCreateView(auth_mixins.IsOwnerMixin,View):
     template_name = 'csgo/listing/listing_create.html'
@@ -140,7 +130,8 @@ class CartView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing','listing__inventory','listing__inventory__item').prefetch_related('listing__inventory__addons')
+        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing','listing__inventory','listing__inventory__item')\
+                                                        .prefetch_related('listing__inventory__addons')
         return context
 
 class CartDeleteView(auth_mixins.IsOwnerMixin,View):
@@ -241,5 +232,27 @@ def get_item_price_view(request):
     return JsonResponse(response)
 
 
-def test(request, *args, **kwargs):
-    return HttpResponse('DONE')
+class ChatManageView(View):
+    def post(self,request,*args, **kwargs):
+        item = request.POST.get('item')
+        try:
+            item = models.Listing.objects.get(pk=item)
+        except models.Listing.DoesNotExist:
+            return HttpResponse(status=400)
+        user = self.request.user
+        # if user == item.owner:
+        #     return HttpResponse(status=400)
+        room = Room.objects.filter(user=user).filter(user=item.owner)
+        if room.exists():
+            room = room.first()
+        else:
+            room = Room.objects.create()
+            room.user.add(user)
+            room.user.add(item.owner)
+        Message.objects.create(
+            room=room,
+            user=user,
+            username=user.username,
+            content=f'Hello, Im intrested in this item you listed.<a href="{item.get_absolute_url()}">{item.name()}</a>',
+        )
+        return redirect(f"{reverse('chat:index')}?u={item.owner.steamid64}")

@@ -23,7 +23,7 @@
                     <div class="card-body">
                         <div class="p-1">
                             <h4>Create Listing</h4>
-                            <form action="" method="post">
+                            <form action="" method="post" class="form-format">
                                 {% csrf_token %}
                                 {{form | crispy}}
                                 <button type="submit" class="btn btn-success my-2">Create Listing</button>
@@ -63,8 +63,8 @@
                         <div class="row">
                             {% for addon in obj.get_addons %}
                             <div class="col-3">
-                                <img src="{{addon.get_icon_small}}" class="img-fluid" data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom" title="{{addon.market_hash_name}}">
+                                <img src="{{addon.icon}}" class="img-fluid" data-bs-toggle="tooltip"
+                                data-bs-placement="bottom" title="{{addon.item.market_hash_name}}">
                             </div>
                             {% endfor %}
                         </div>
@@ -80,3 +80,14 @@
 
 
 {% endblock content %}
+
+{% block js %}
+<script>
+        // Tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+
+{% endblock js %}

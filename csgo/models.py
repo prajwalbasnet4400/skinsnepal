@@ -176,7 +176,7 @@ class InventoryItem(models.Model):
         return self.item.market_hash_name
         
     def __str__(self):
-        return self.item.market_hash_name
+        return self.assetid
     
     def get_steam_inv_url(self):
         return f"{self.owner.get_steam_url()}/inventory/#730_2_{self.assetid}"
