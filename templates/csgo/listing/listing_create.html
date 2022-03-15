@@ -1,5 +1,4 @@
 {% extends 'base/base.html' %}
-{% load crispy_forms_tags %}
 {% block content %}
 
 <div class="row">
@@ -25,7 +24,7 @@
                             <h4>Create Listing</h4>
                             <form action="" method="post" class="form-format">
                                 {% csrf_token %}
-                                {{form | crispy}}
+                                {{form}}
                                 <button type="submit" class="btn btn-success my-2">Create Listing</button>
                             </form>
                         </div>

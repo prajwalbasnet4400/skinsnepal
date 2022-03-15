@@ -11,17 +11,17 @@ avatar_url = settings.STEAM_AVATAR_URL
 class Item(models.Model):
     name = models.CharField(max_length=256)
     market_hash_name = models.CharField(unique=True,blank=False,null=False,max_length=255)
-    icon_url = models.TextField(blank=True,null=True)
-    icon_url_large = models.TextField(blank=True,null=True)
     type = models.CharField(max_length=64)
     sub_type = models.CharField(max_length=64,blank=True,null=True)
     weapon_type = models.CharField(max_length=64, blank=True,null=True)
     exterior = models.CharField(max_length=64, blank=True,null=True)
     rarity = models.CharField(max_length=64, blank=True,null=True)
     rarity_color = models.CharField(max_length=64, blank=True,null=True)
+    tournament = models.CharField(max_length=255,blank=True,null=True)
+    icon_url = models.TextField(blank=True,null=True)
+    icon_url_large = models.TextField(blank=True,null=True)
     stattrak = models.BooleanField(null=True)
     souvenir = models.BooleanField(null=True)
-    tournament = models.CharField(max_length=255,blank=True,null=True)
 
     @staticmethod
     def get_update():
@@ -68,7 +68,7 @@ class Listing(models.Model):
         AUC = "AUCTION", "AUCTION"
 
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,null=False)
-    inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True,related_name='listed')
+    inventory = models.OneToOneField('InventoryItem',on_delete=models.CASCADE,null=True,related_name='listing')
     price = models.PositiveBigIntegerField(validators=[MinValueValidator(1)],null=False,blank=False)
     purpose = models.CharField(max_length=32,choices=PurposeChoices.choices,default=PurposeChoices.SEL)
     date_listed = models.DateTimeField(auto_now_add=True)
@@ -103,6 +103,9 @@ class Listing(models.Model):
     def name(self):
         return self.inventory.item.name
 
+    def market_hash_name(self):
+        return self.inventory.item.market_hash_name
+
     def addons(self):
         return self.inventory.addons.all()
 
@@ -111,6 +114,9 @@ class Listing(models.Model):
 
     def get_steam_inv_url(self):
         return f"{self.owner.get_steam_url()}/inventory/#730_2_{self.inventory.assetid}"
+
+    def get_owner(self):
+        return self.owner
 
     def save(self,*args, **kwargs):
         if not self.pk:
@@ -123,7 +129,7 @@ class Listing(models.Model):
         return reverse('csgo:detail', args=[str(self.pk)])
     
     def __str__(self):
-        return self.inventory.item.market_hash_name
+        return self.name()
 
 class CartItem(models.Model):
     owner = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)

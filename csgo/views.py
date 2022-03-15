@@ -1,4 +1,5 @@
 from django.db.models.aggregates import Max, Min
+from django.http import Http404, HttpResponseBadRequest
 from django.urls import reverse
 from django.views import View
 from django.http.response import HttpResponse, JsonResponse
@@ -21,10 +22,12 @@ from . import filters
 from .logic import khalti
 from . import auth_mixins
 
+
 class IndexView(TemplateView):
     template_name = 'csgo/index.html'
 
-class ListingBuyView(TemplateView):                                 # TODO: Pagination
+
+class ListingBuyView(TemplateView):
     template_name = 'csgo/listing/listing_shop.html'
     paginate_by = 30
     queryset = models.Listing.objects.select_related('inventory', 'inventory__item').prefetch_related('inventory__addons').filter(
@@ -34,7 +37,8 @@ class ListingBuyView(TemplateView):                                 # TODO: Pagi
         context = super().get_context_data(**kwargs)
         page_no = self.request.GET.get('page')
         filtered = filters.ListingFilter(self.request.GET, self.queryset)
-        filtered.page_obj = Paginator(filtered.qs,self.paginate_by).get_page(page_no)
+        filtered.page_obj = Paginator(
+            filtered.qs, self.paginate_by).get_page(page_no)
         context['filter'] = filtered
         return context
 
@@ -48,17 +52,18 @@ class ListingDetailView(DetailView):
               'inspect_url', 'date_created', 'addons')
 
     # Add to Cart
-    def post(self,request,*args, **kwargs):
+    def post(self, request, *args, **kwargs):
         listing = self.get_object()
         owner = request.user
         obj, created = models.CartItem.objects.get_or_create(
-                                                    owner=owner,
-                                                    listing=listing)
+            owner=owner,
+            listing=listing)
         if created:
-            messages.success(request,'Added to cart','Notify')
+            messages.success(request, 'Added to cart', 'Notify')
         else:
-            messages.warning(request,'Already in cart','Report')
+            messages.warning(request, 'Already in cart', 'Report')
         return redirect(listing)
+
 
 class InventoryListView(LoginRequiredMixin, TemplateView):
     template_name = 'csgo/listing/inventory_list.html'
@@ -69,16 +74,19 @@ class InventoryListView(LoginRequiredMixin, TemplateView):
             owner=self.request.user, item_state=models.InventoryItem.ItemStateChoices.INV).select_related('item').prefetch_related('addons')
         return context
 
-class ListingCreateView(auth_mixins.IsOwnerMixin,View):
+
+class ListingCreateView(auth_mixins.IsOwnerMixin, View):
     template_name = 'csgo/listing/listing_create.html'
     form_class = InventoryCreateForm
     model = models.InventoryItem
 
     def get_object(self, *args, **kwargs):
-        if not hasattr(self,'obj'):
-            obj = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
-            self.obj = obj
-        return self.obj
+        pk = self.kwargs.get('pk')
+        if pk:
+            obj = get_object_or_404(self.model, pk=pk)
+        else:
+            raise Http404
+        return obj
 
     def is_object_owner(self, user, obj):
         return user == obj.owner
@@ -86,7 +94,7 @@ class ListingCreateView(auth_mixins.IsOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         form = self.form_class()
         obj = self.get_object()
-        ctx = {'form': form,'obj':obj}
+        ctx = {'form': form, 'obj': obj}
         return render(request, self.template_name, ctx)
 
     def post(self, request, *args, **kwargs):
@@ -114,9 +122,10 @@ class ListingCreateView(auth_mixins.IsOwnerMixin,View):
 
                 return redirect(listing)
         else:
-            form.add_error(field=None,error='Item doesn\'t belong to you')
+            form.add_error(field=None, error='Item doesn\'t belong to you')
         ctx = {'form': form, 'obj': inventory}
         return render(request, self.template_name, ctx)
+
 
 class ListingDeleteView(auth_mixins.IsOwnerMixin, DeleteView):
     model = models.Listing
@@ -124,26 +133,40 @@ class ListingDeleteView(auth_mixins.IsOwnerMixin, DeleteView):
     success_url = '/'
     template_name = 'csgo/listing/listing_confirm_delete.html'
 
+    def get_object(self, *args, **kwargs):
+        return super().get_object(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
 
 class CartView(LoginRequiredMixin, TemplateView):
     template_name = 'csgo/transaction/cart.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing','listing__inventory','listing__inventory__item')\
-                                                        .prefetch_related('listing__inventory__addons')
+        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing', 'listing__inventory', 'listing__inventory__item')\
+            .prefetch_related('listing__inventory__addons')
         return context
 
-class CartDeleteView(auth_mixins.IsOwnerMixin,View):
+
+class CartDeleteView(auth_mixins.IsOwnerMixin, View):
+    model = models.CartItem
+
     def get_object(self, *args, **kwargs):
-        obj = get_object_or_404(models.CartItem,pk=self.request.POST.get('cartitem')) 
+        pk = self.kwargs.get('pk')
+        if not pk:
+            raise Http404
+        obj = get_object_or_404(self.model, pk=pk)
         return obj
 
-    def post(self,request,*args, **kwargs):
+    def post(self, request, *args, **kwargs):
         cartitem = self.get_object()
         cartitem.delete()
-        messages.success(request,'Deleted From Cart','Notify')
+        messages.success(request, 'Deleted From Cart', 'Notify')
         return redirect('csgo:cart')
+
 
 class CheckOutView(View):
     def post(self, request, *args, **kwargs):                 # Checkout
@@ -209,14 +232,16 @@ class WalletView(LoginRequiredMixin, ListView):
             return HttpResponse(status=400)
         return HttpResponse('DONE')
 
-class InventoryManageView(LoginRequiredMixin,View):
 
-    def post(self,request,*args, **kwargs):
+class InventoryUpdateView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
         user = request.user
         inv = Inventory(user)
         inv.update_inventory()
-        messages.success(request,'Inventory Updated','Notify')
+        messages.success(request, 'Inventory Updated', 'Notify')
         return redirect('csgo:inventory')
+
 
 def get_item_price_view(request):
     names = set(request.GET.getlist('names'))
@@ -232,27 +257,43 @@ def get_item_price_view(request):
     return JsonResponse(response)
 
 
-class ChatManageView(View):
-    def post(self,request,*args, **kwargs):
-        item = request.POST.get('item')
-        try:
-            item = models.Listing.objects.get(pk=item)
-        except models.Listing.DoesNotExist:
-            return HttpResponse(status=400)
+class ChatOfferView(LoginRequiredMixin, View):
+    model = models.Listing
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        listing = self.get_object()
+        room = self.get_room(listing)
+        Message.objects.create(
+            room=room,
+            user=user,
+            username=user.username,
+            content=self.get_message_content(listing),
+        )
+        return redirect(f"{reverse('chat:index')}?u={listing.owner.steamid64}")
+
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        if not pk:
+            raise Http404
+        obj = get_object_or_404(self.model, pk=pk)
+        if obj.owner == self.request.user:
+            # Do something
+            pass
+        return obj
+
+    def get_room(self, listing):
         user = self.request.user
-        # if user == item.owner:
-        #     return HttpResponse(status=400)
-        room = Room.objects.filter(user=user).filter(user=item.owner)
+        room = Room.objects.filter(user=user).filter(user=listing.owner)
         if room.exists():
             room = room.first()
         else:
             room = Room.objects.create()
             room.user.add(user)
-            room.user.add(item.owner)
-        Message.objects.create(
-            room=room,
-            user=user,
-            username=user.username,
-            content=f'Hello, Im intrested in this item you listed.<a href="{item.get_absolute_url()}">{item.name()}</a>',
-        )
-        return redirect(f"{reverse('chat:index')}?u={item.owner.steamid64}")
+            room.user.add(listing.owner)
+        return room
+
+    def get_message_content(self, listing):
+        content = f'Hello, Im intrested in this item you listed.<a href="{listing.get_absolute_url()}">{listing.name()}</a>'
+        return content
+

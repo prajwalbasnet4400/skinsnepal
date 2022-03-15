@@ -3,9 +3,16 @@
 {% block content %}
     <form action="" method="post">
         {% csrf_token %}
-        Are you sure you want to delete you listing of "{{object}}" ?
+        Are you sure you want to delete you listing of "{{listing}}" ?
+        <br>
+        Name -> {{listing}}
+        <br>
+        Float -> {{listing.float}}
+        <br>
+        Price -> {{listing.price}}
+        <br>
         <button class="btn btn-danger" type="submit">Delete</button>
-        <button class="btn btn-info" type="button">No, Go back</button>
+        <a class="btn btn-info" href="{{listing.get_absolute_url}}">No, Go back</a>
     </form>
 
 {% endblock content %}

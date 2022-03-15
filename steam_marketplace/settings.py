@@ -1,7 +1,6 @@
 from pathlib import Path
 import os
 import dotenv
-import django_heroku
 
 dotenv.load_dotenv()
 
@@ -24,30 +23,20 @@ ASGI_APPLICATION = 'steam_marketplace.asgi.application'
 INSTALLED_APPS = [
     'channels',
     'django.contrib.admin',
-    'chat',
-
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-
-
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',
     'debug_toolbar',
     'django_filters',
-    'django_q',
 
-    'crispy_forms',
-    # 'social_django',
-
+    'chat',
     'user',
     'csgo',
-    'message',
-    'api'
 ]
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -102,8 +91,7 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': 5432,
         'USER': 'postgres',
-        'PASSWORD': 'mysecretpassword'
-
+        'PASSWORD': 'mysecretpassword',
     }
 }
 Q_CLUSTER = {
@@ -185,8 +173,6 @@ LOGIN_URL = '/user/auth/steam/'
 CORS_ALLOW_ALL_ORIGINS = True
 
 SITE_URL = 'http://127.0.0.1:8000'
-django_heroku.settings(locals())
-
 
 CHANNEL_LAYERS = {
     'default': {

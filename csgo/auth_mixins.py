@@ -10,3 +10,5 @@ class IsOwnerMixin(LoginRequiredMixin):
         obj = super().get_object(*args, **kwargs)
         if self.request.user != obj.get_owner():
             raise self.handle_no_permission()
+        else:
+            return obj

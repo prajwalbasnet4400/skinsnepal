@@ -31,7 +31,7 @@
                         <td>रु {{item.listing.get_price}}</td>
                         <td>
                             <div>
-                                <form action="{% url 'csgo:cart_delete' %}" method="post">
+                                <form action="{% url 'csgo:cart_delete' pk=item.pk %}" method="post">
                                     {% csrf_token %}
                                     <input type="hidden" name="cartitem" value="{{item.pk}}">
                                     <button type="submit" class="btn btn-sm btn-danger">Remove</button>

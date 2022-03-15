@@ -22,7 +22,7 @@ class User(AbstractUser):
     def get_steam_url(self):
         return f"https://steamcommunity.com/profiles/{self.steamid64}"
 
-class Profile(models.Model):                #TODO:add integration for steam api key
+class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='profile')
     trade_url = models.URLField(null=True,blank=True)
 

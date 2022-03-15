@@ -12,13 +12,13 @@ listing_patterns = [
 
 cart_patterns = [
     path('', views.CartView.as_view(),name='cart'),
-    path('delete/', views.CartDeleteView.as_view(),name='cart_delete'),
+    path('delete/<str:pk>/', views.CartDeleteView.as_view(),name='cart_delete'),
 ]
 
 inventory_patterns = [
     path('', views.InventoryListView.as_view(),name='inventory'),
     path('create/<str:pk>/', views.ListingCreateView.as_view(),name='inventory_create'),
-    path('manage/', views.InventoryManageView.as_view(),name='inventory_update'),
+    path('manage/', views.InventoryUpdateView.as_view(),name='inventory_update'),
 ]
 
 transaction_patterns = [
@@ -31,7 +31,7 @@ wallet_patterns = [
 ]
 
 chat_patterns = [
-    path('chat_manage/', views.ChatManageView.as_view(),name='chat_manage')
+    path('chat_create_offer/<str:pk>/', views.ChatOfferView.as_view(),name='chat_offer')
 ]
 
 urlpatterns = [
