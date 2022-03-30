@@ -1,34 +1,30 @@
-from django.http import HttpResponse
-from django.conf import settings
-from urllib.parse import urlencode
 import re
 import requests
+from django.http import HttpResponse
+from django.conf import settings
 from urllib.parse import urlencode
 from django.contrib.auth import get_user_model
 
 USER_MODEL = get_user_model()
 
-# TODO: Make this dynamic
-STEAM_LOGIN_URL = 'https://steamcommunity.com/openid/login'
-STEAM_AUTH_REALM = 'http://127.0.0.1:8000'
-ABSOLUTE_URL = getattr(settings, 'ABSOLUTE_URL', 'localhost:8000')
-STEAM_LOGIN_URL = 'https://steamcommunity.com/openid/login'
-
+STEAM_OPENID_URL = settings.STEAM_OPENID_URL
+SITE_URL = settings.SITE_URL
+STEAM_API_KEY = settings.STEAM_API_KEY
 
 def auth(callback_url):
-    STEAM_AUTH_CALLBACK_URL = f"http://127.0.0.1:8000{callback_url}"
+    STEAM_AUTH_CALLBACK_URL = f"{SITE_URL}{callback_url}"
 
     params = {
         'openid.ns': 'http://specs.openid.net/auth/2.0',
         'openid.mode': 'checkid_setup',
         'openid.return_to': STEAM_AUTH_CALLBACK_URL,
-        'openid.realm': STEAM_AUTH_REALM,
+        'openid.realm': SITE_URL,
         'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
         'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
     }
 
     response = HttpResponse()
-    response['Location'] = f'{STEAM_LOGIN_URL}?{urlencode(params)}'
+    response['Location'] = f'{STEAM_OPENID_URL}?{urlencode(params)}'
     response['Content-Type'] = 'application/x-www-form-urlencoded'
     response.status_code = 302
     return response
@@ -53,7 +49,7 @@ def get_uid(results):
 
     args['openid.mode'] = 'check_authentication'
 
-    response = requests.post(STEAM_LOGIN_URL, args)
+    response = requests.post(STEAM_OPENID_URL, args)
 
     if re.search(r'is_valid:true', response.text):
         matches = re.search(
@@ -73,7 +69,7 @@ def associate_user(uid):
 
     response = requests.get(
         'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/', params={
-            'key': settings.STEAM_API_KEY, 'steamids': uid})
+            'key': STEAM_API_KEY, 'steamids': uid})
     player = response.json().get('response').get('players')[0]
     user = USER_MODEL.objects.filter(steamid64=player.get('steamid'))
     if not user.exists():

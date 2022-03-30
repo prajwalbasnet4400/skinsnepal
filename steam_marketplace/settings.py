@@ -7,15 +7,12 @@ dotenv.load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-INVENTORY_ITEM = 'https://steamcommunity.com/id/theonionknight4400/inventory/#730_2_{assetid}'
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 FLOAT_API = "https://api.csgofloat.com/?url={inspect_url}"
 DEBUG = bool(os.environ.get('DEBUG',0))
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split()
+
 AUTH_USER_MODEL = 'user.User'
 
 # Application definition
@@ -65,7 +62,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'steam_marketplace.urls'
-CORS_ORIGIN_ALLOW_ALL = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -94,25 +90,6 @@ DATABASES = {
         'PASSWORD': 'mysecretpassword',
     }
 }
-Q_CLUSTER = {
-    'name': 'steam',
-    'workers': 3,
-    'recycle': 500,
-    'timeout': 60,
-    'compress': True,
-    'save_limit': 250,
-    'queue_limit': 500,
-    'cpu_affinity': 3,
-    'label': 'Django Q',
-    'redis': {
-        'host': '192.168.1.100',
-        'port': 6379,
-        'db': 0, }
-}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -139,13 +116,14 @@ USE_L10N = True
 
 USE_TZ = True
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/uploads/'
+LOGIN_REDIRECT_URL = ''
+LOGIN_URL = '/user/auth/steam/'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-STEAM_AVATAR_URL = 'https://community.akamai.steamstatic.com/economy/image/'
+SITE_URL = 'http://127.0.0.1:8000'
 
 DEFAULT_FROM_EMAIL = 'TheOnionKnight@academygaming.org'
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
@@ -154,25 +132,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
-USD_RATE = 100
-
-KHALTI_PUBLIC_KEY = os.environ.get('KHALTI_PUBLIC_KEY')
-KHALTI_SECRET_KEY = os.environ.get('KHALTI_SECRET_KEY')
-
 STEAM_API_KEY = os.environ.get('STEAM_API_KEY')
-
-KHALTI_VERIFICATION_URL = 'https://khalti.com/api/v2/payment/verify/'
-KHALTI_LIST_URL = 'https://khalti.com/api/v2/merchant-transaction/'
-KHALTI_DETAIL_URL = 'https://khalti.com/api/v2/merchant-transaction/<idx>/'
-KHALTI_STATUS_URL = 'https://khalti.com/api/v2/payment/status/'
-
-LOGIN_REDIRECT_URL = ''
-LOGIN_URL = '/user/auth/steam/'
-
-CORS_ALLOW_ALL_ORIGINS = True
-
-SITE_URL = 'http://127.0.0.1:8000'
+STEAM_OPENID_URL = 'https://steamcommunity.com/openid/login'
+STEAM_AVATAR_URL = 'https://community.akamai.steamstatic.com/economy/image/'
 
 CHANNEL_LAYERS = {
     'default': {

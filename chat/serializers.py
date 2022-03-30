@@ -6,7 +6,6 @@ class UserBasicSerializer(serializers.ModelSerializer):
         model = USER_MODEL
         fields = ['username','steamid64','avatar']
 
-
 class RoomSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(many=True)
     class Meta:
@@ -16,4 +15,4 @@ class RoomSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ['username','content','date_sent','status','steamid64',]
+        fields = ['content','date_sent','status','steamid64',]

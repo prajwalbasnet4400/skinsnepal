@@ -7,7 +7,8 @@ class User(AbstractUser):
     avatar = models.URLField(blank=True)
     phone = models.CharField(max_length=15,null=True,blank=True)
     credit = models.PositiveIntegerField(default=0)
-    
+    blocked_user = models.ManyToManyField('User')
+
     def get_token(self):
         token, created = Token.objects.get_or_create(user=self)
         return token.key

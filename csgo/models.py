@@ -4,7 +4,8 @@ from django.conf import settings
 from django.core.validators import MinValueValidator,MaxValueValidator
 from django.urls import reverse   
 
-from .api_parsers.parsers import get_csgo_items
+from csgo.logic.parsers import get_csgo_items
+
 
 avatar_url = settings.STEAM_AVATAR_URL
 
@@ -103,6 +104,7 @@ class Listing(models.Model):
     def name(self):
         return self.inventory.item.name
 
+    @property
     def market_hash_name(self):
         return self.inventory.item.market_hash_name
 
@@ -198,72 +200,3 @@ class Addon(models.Model):
         return self.item.name
     def icon(self):
         return self.item.get_icon()
-
-
-class Transaction(models.Model): #TODO: Rewrite choices to use TextChoices class to clean this mess
-    class StateChoices(models.TextChoices):
-        PPD = "1", "PAYMENT PENDING"
-        PCM = "2", "PAYMENT COMPLETE"
-        TST = "3", "TRADE SENT"
-        TAC = "4", "TRADE ACCEPTED"
-        FTF = "5", "FUNDS TRANSFERRED"
-        TCM = "6", "TRANSACTION COMPLETE"
-        BYE = "100", "BUYER ERROR"
-        SEE = "99", "SELLER ERROR"
-    
-    buyer = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
-    listing = models.OneToOneField(Listing,on_delete=models.PROTECT,related_name='transaction')
-    state = models.CharField(max_length=64,choices=StateChoices.choices,default=StateChoices.PCM)
-    
-    trade_sent_screenshot = models.ImageField(upload_to='uploads')
-    trade_recv_screenshot = models.ImageField(upload_to='uploads')
-
-    state_last_changed = models.DateTimeField(auto_now=True)
-    transaction_started = models.DateTimeField(auto_now_add=True)
-
-    notification_sent = models.BooleanField(default=False)
-
-    def save(self,*args, **kwargs):
-        if not self.pk:
-            inventory = self.listing.inventory
-            inventory.item_state = InventoryItem.TRA
-            inventory.save()
-        self.notification_sent = False
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.buyer}-{self.pk}-{self.state}"
-
-    def buyer_paid(self):                                               # Integrate with payment gateway
-        return True
-    
-    def seller_paid(self):
-        return True
-
-class WalletTransaction(models.Model):
-    class TypeChoice(models.TextChoices):
-        CR = "CREDIT","CREDIT"
-        DR = "DEBIT","DEBIT"
-
-    owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    amount = models.PositiveIntegerField()
-    type = models.CharField(max_length=32,choices=TypeChoice.choices)
-    date_created = models.DateTimeField(auto_now_add=True)
-    khalti = models.OneToOneField('KhaltiTransaction',on_delete=models.CASCADE,null=True)
-
-    def __str__(self):
-        return f"{self.user}-{self.amount}-{self.type}"
-    
-    def get_amount(self):
-        return self.amount//100
-
-class KhaltiTransaction(models.Model):
-    idx = models.CharField(max_length=128)
-    amount = models.PositiveIntegerField()
-    date_created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.idx
-        
-    def get_amount(self):
-        return self.amount//100

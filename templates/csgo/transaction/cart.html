@@ -17,8 +17,7 @@
                     {% for item in buy %}
                     <tr data-pk="{{item.listing.pk}}">
                         <td class="name">
-                            <a style="text-decoration: none;"
-                                href="{% url 'csgo:detail' pk=item.listing.pk %}">
+                            <a style="text-decoration: none;" href="{% url 'csgo:detail' pk=item.listing.pk %}">
                                 <img src="{{item.listing.icon}}" width="64" alt="">
                                 {{item.listing}}
                             </a>
@@ -30,12 +29,20 @@
                         </td>
                         <td>रु {{item.listing.get_price}}</td>
                         <td>
-                            <div>
-                                <form action="{% url 'csgo:cart_delete' pk=item.pk %}" method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="cartitem" value="{{item.pk}}">
-                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-                                </form>
+                            <div class="d-flex">
+                                <div class="me-2">
+                                    <form action="{% url 'chat:index' %}" method="get">
+                                        <input type="hidden" name="u" value="{{item.listing.owner.steamid64}}">
+                                        <button type="submit" class="btn btn-sm btn-success">Chat with seller</button>
+                                    </form>
+                                </div>
+                                <div>
+                                    <form action="{% url 'csgo:cart_delete' pk=item.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="cartitem" value="{{item.pk}}">
+                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                    </form>
+                                </div>
                             </div>
                         </td>
                     </tr>

@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from .models import Listing, Transaction, InventoryItem
+from .models import Listing, InventoryItem
 from django.forms.widgets import TextInput
 
 class ListingFilter(filters.FilterSet):
@@ -16,13 +16,4 @@ class InventoryItemFilter(filters.FilterSet):
         model = InventoryItem
         fields = {
             'float':['lte']
-        }
-
-
-class TransactionFilter(filters.FilterSet):
-    class Meta:
-        model = Transaction
-        fields = {
-            'state': ['exact'],
-            'listing__inventory__item__market_hash_name': ['icontains']
         }
