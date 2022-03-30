@@ -13,7 +13,7 @@
         <div class="my-2">
             <form action="{% url 'csgo:inventory_update' %}" method="post">
                 {% csrf_token %}
-                <button class="btn btn-info" type="submit">Update Inventory</button>
+                <button class="btn btn-info" type="submit" onclick="Notiflix.Loading.Pulse('Updating Inventory, Please wait');">Update Inventory</button>
             </form>
         </div>
     </div>
@@ -30,7 +30,7 @@
                                 </span>
                                 <br><span style="color: #{{item.item.rarity_color}};">{{item.item.name}}</span>
                             </p>
-                            <img class="img-fluid" style="position: relative;z-index: 99;" src="{{item.icon}}" alt="">
+                            <img class="img-fluid" style="position: relative;z-index: 99;" src="{{item.icon}}" alt="{{item.item.market_hash_name}}" loading="lazy">
                             <div class="text-center">
                                 <span class="text-muted" style="font-size: 0.8rem;">{{item.float}}</span>
                                 <input class="float-field" type="range" name="float" value="{{item.float}}" min="0"

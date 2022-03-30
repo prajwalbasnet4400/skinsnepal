@@ -1,10 +1,10 @@
-from django.db.models.aggregates import Max, Min
-from django.http import Http404, HttpResponseBadRequest
+from django.db.models.aggregates import Min
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.views import View
-from django.http.response import HttpResponse, JsonResponse
+from django.http.response import JsonResponse
 from django.views.generic.base import TemplateView
-from django.views.generic import ListView, DetailView, DeleteView
+from django.views.generic import DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 
@@ -12,15 +12,14 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .api_parsers.steam_inventory import Inventory
-from .api_parsers.parsers import get_item_price
+from .logic.steam_inventory import InventoryItemLogic
+from .logic.parsers import get_item_price
 from .forms import InventoryCreateForm
 from chat.models import Room, Message
 
 from . import models
 from . import filters
-from .logic import khalti
-from . import auth_mixins
+from . import mixins
 
 
 class IndexView(TemplateView):
@@ -30,7 +29,7 @@ class IndexView(TemplateView):
 class ListingBuyView(TemplateView):
     template_name = 'csgo/listing/listing_shop.html'
     paginate_by = 30
-    queryset = models.Listing.objects.select_related('inventory', 'inventory__item').prefetch_related('inventory__addons').filter(
+    queryset = models.Listing.objects.select_related('inventory', 'inventory__item').prefetch_related('inventory__addons','inventory__addons__item').filter(
         purpose="SELL", inventory__item_state=models.InventoryItem.ItemStateChoices.LIS).order_by('date_listed')
 
     def get_context_data(self, **kwargs):
@@ -41,7 +40,6 @@ class ListingBuyView(TemplateView):
             filtered.qs, self.paginate_by).get_page(page_no)
         context['filter'] = filtered
         return context
-
 
 class ListingDetailView(DetailView):
     template_name = 'csgo/listing/listing_detail.html'
@@ -64,18 +62,16 @@ class ListingDetailView(DetailView):
             messages.warning(request, 'Already in cart', 'Report')
         return redirect(listing)
 
-
 class InventoryListView(LoginRequiredMixin, TemplateView):
     template_name = 'csgo/listing/inventory_list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["inventory"] = models.InventoryItem.objects.filter(
-            owner=self.request.user, item_state=models.InventoryItem.ItemStateChoices.INV).select_related('item').prefetch_related('addons')
+            owner=self.request.user, item_state=models.InventoryItem.ItemStateChoices.INV).select_related('item').prefetch_related('addons',"addons__item")
         return context
 
-
-class ListingCreateView(auth_mixins.IsOwnerMixin, View):
+class ListingCreateView(mixins.IsOwnerMixin, View):
     template_name = 'csgo/listing/listing_create.html'
     form_class = InventoryCreateForm
     model = models.InventoryItem
@@ -126,8 +122,7 @@ class ListingCreateView(auth_mixins.IsOwnerMixin, View):
         ctx = {'form': form, 'obj': inventory}
         return render(request, self.template_name, ctx)
 
-
-class ListingDeleteView(auth_mixins.IsOwnerMixin, DeleteView):
+class ListingDeleteView(mixins.IsOwnerMixin, DeleteView):
     model = models.Listing
     context_object_name = 'listing'
     success_url = '/'
@@ -140,18 +135,16 @@ class ListingDeleteView(auth_mixins.IsOwnerMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         return context
 
-
 class CartView(LoginRequiredMixin, TemplateView):
     template_name = 'csgo/transaction/cart.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing', 'listing__inventory', 'listing__inventory__item')\
+        context['buy'] = models.CartItem.objects.filter(owner=self.request.user).select_related('listing','listing__owner', 'listing__inventory', 'listing__inventory__item')\
             .prefetch_related('listing__inventory__addons')
         return context
 
-
-class CartDeleteView(auth_mixins.IsOwnerMixin, View):
+class CartDeleteView(mixins.IsOwnerMixin, View):
     model = models.CartItem
 
     def get_object(self, *args, **kwargs):
@@ -167,77 +160,11 @@ class CartDeleteView(auth_mixins.IsOwnerMixin, View):
         messages.success(request, 'Deleted From Cart', 'Notify')
         return redirect('csgo:cart')
 
-
-class CheckOutView(View):
-    def post(self, request, *args, **kwargs):                 # Checkout
-        buyer = request.user
-        item = request.POST.get('item')
-        cart_item = models.CartItem.objects.get(
-            cart__owner=request.user, pk=item)
-        if buyer.credit < cart_item.listing.price:
-            return HttpResponse('Insufficient funds', status=200)
-        obj = models.Transaction(buyer=buyer, listing=cart_item.listing)
-        obj.save()
-        buyer.credit = buyer.subtract_credit(cart_item.listing.price)
-        buyer.save()
-        cart_item.delete()
-        return HttpResponse(status=200)
-
-
-class TransactionListView(LoginRequiredMixin, TemplateView):
-    template_name = 'csgo/transaction/transaction_list.html'
-
-    def get_context_data(self, **kwargs):
-        queryset = models.Transaction.objects.filter(buyer=self.request.user).select_related(
-            'buyer', 'listing', 'listing__inventory').order_by('-state_last_changed')
-        context = super().get_context_data(**kwargs)
-        context['filter'] = filters.TransactionFilter(
-            self.request.GET, queryset)
-        return context
-
-
-class TransactionDetailView(LoginRequiredMixin, DetailView):
-    model = models.Transaction
-    template_name = 'csgo/transaction/transaction.html'
-    context_object_name = 'transaction'
-
-
-class WalletView(LoginRequiredMixin, ListView):
-    model = models.WalletTransaction
-    template_name = 'csgo/wallet/wallet_list.html'
-    context_object_name = 'txns'
-
-    def post(self, request, *args, **kwargs):
-        user = self.request.user
-        data = request.POST
-        if data.get('type') == 'add_funds':
-            payload = {"token": data.get(
-                'token'), "amount": data.get('amount')}
-            resp = khalti.verify_khalti(payload)
-            if resp.get('success'):
-                resp_data = resp.get('data')
-                klt = models.KhaltiTransaction(idx=data.get(
-                    'idx'), amount=resp_data.get('amount'))
-                klt.save()
-                wlt_txn = models.WalletTransaction(user=user, amount=resp_data.get(
-                    'amount'), type=models.WalletTransaction.TypeChoice.CR, khalti=klt)
-                wlt_txn.save()
-                user.credit = user.add_credit(resp_data.get('amount'))
-                user.save()
-            else:
-                return HttpResponse(status=400)
-        elif data.get('type') == 'withdraw_funds':
-            pass
-        else:
-            return HttpResponse(status=400)
-        return HttpResponse('DONE')
-
-
 class InventoryUpdateView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        inv = Inventory(user)
+        inv = InventoryItemLogic(user)
         inv.update_inventory()
         messages.success(request, 'Inventory Updated', 'Notify')
         return redirect('csgo:inventory')
@@ -294,6 +221,6 @@ class ChatOfferView(LoginRequiredMixin, View):
         return room
 
     def get_message_content(self, listing):
-        content = f'Hello, Im intrested in this item you listed.<a href="{listing.get_absolute_url()}">{listing.name()}</a>'
+        content = f'Hello, Im intrested in this item you listed.<a href="{listing.get_absolute_url()}">{listing.market_hash_name}</a>'
         return content
 

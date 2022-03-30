@@ -21,15 +21,6 @@ inventory_patterns = [
     path('manage/', views.InventoryUpdateView.as_view(),name='inventory_update'),
 ]
 
-transaction_patterns = [
-    path('transactions/', views.TransactionListView.as_view(),name='transaction_list'),
-    path('transaction/<str:pk>/', views.TransactionDetailView.as_view(),name='transaction'),
-]
-
-wallet_patterns = [
-    path('wallet/', views.WalletView.as_view(),name='wallet_list'),
-]
-
 chat_patterns = [
     path('chat_create_offer/<str:pk>/', views.ChatOfferView.as_view(),name='chat_offer')
 ]

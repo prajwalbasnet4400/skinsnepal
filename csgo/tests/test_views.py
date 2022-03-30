@@ -16,6 +16,7 @@ class TestModel():
         self.user = USER_MODEL.objects.create(
             username='test_user_1',
             avatar='https://avatars.cloudflare.steamstatic.com/264a3bf942e51db3e8d1a960573b4e6dda124c5f_full.jpg',
+            steamid64 = '76561198323043075',
             phone='0000000000')
         self.item = Item.objects.create(
             name=" Aquamarine Revenge ",
@@ -161,10 +162,11 @@ class ListingCreateViewTest(TestCase):
         self.assertEqual(302, response.status_code)
 
 
-class ListingUpdateViewTest(TestCase):
+class InventoryUpdateViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         test_data = TestModel()
+        Item.get_update()
         cls.user = test_data.user
 
     def setUp(self):
